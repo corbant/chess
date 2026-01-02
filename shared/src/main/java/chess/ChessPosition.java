@@ -56,4 +56,9 @@ public class ChessPosition {
             return false;
         return true;
     }
+
+    @Override
+    public String toString() {
+        return "ChessPosition [row=" + row + ", col=" + col + "]";
+    }
 }
