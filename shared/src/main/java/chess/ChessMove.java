@@ -8,22 +8,37 @@ package chess;
  */
 public class ChessMove {
 
+    private ChessPosition startPosition;
+    private ChessPosition endPosition;
+    private ChessPiece.PieceType promotionPiece;
+
+    /**
+     * Creates a new ChessMove with the given start and end positions, as well as a
+     * promotion piece in the case of a pawn
+     * 
+     * @param startPosition  starting location
+     * @param endPosition    ending location
+     * @param promotionPiece pawn piece promotion type
+     */
     public ChessMove(ChessPosition startPosition, ChessPosition endPosition,
-                     ChessPiece.PieceType promotionPiece) {
+            ChessPiece.PieceType promotionPiece) {
+        this.startPosition = startPosition;
+        this.endPosition = endPosition;
+        this.promotionPiece = promotionPiece;
     }
 
     /**
      * @return ChessPosition of starting location
      */
     public ChessPosition getStartPosition() {
-        throw new RuntimeException("Not implemented");
+        return this.startPosition;
     }
 
     /**
      * @return ChessPosition of ending location
      */
     public ChessPosition getEndPosition() {
-        throw new RuntimeException("Not implemented");
+        return this.endPosition;
     }
 
     /**
@@ -33,6 +48,46 @@ public class ChessMove {
      * @return Type of piece to promote a pawn to, or null if no promotion
      */
     public ChessPiece.PieceType getPromotionPiece() {
-        throw new RuntimeException("Not implemented");
+        return this.promotionPiece;
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((startPosition == null) ? 0 : startPosition.hashCode());
+        result = prime * result + ((endPosition == null) ? 0 : endPosition.hashCode());
+        result = prime * result + ((promotionPiece == null) ? 0 : promotionPiece.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        ChessMove other = (ChessMove) obj;
+        if (startPosition == null) {
+            if (other.startPosition != null)
+                return false;
+        } else if (!startPosition.equals(other.startPosition))
+            return false;
+        if (endPosition == null) {
+            if (other.endPosition != null)
+                return false;
+        } else if (!endPosition.equals(other.endPosition))
+            return false;
+        if (promotionPiece != other.promotionPiece)
+            return false;
+        return true;
+    }
+
+    @Override
+    public String toString() {
+        return "ChessMove [startPosition=" + startPosition + ", endPosition=" + endPosition + ", promotionPiece="
+                + promotionPiece + "]";
     }
 }
