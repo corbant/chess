@@ -1,6 +1,8 @@
 package chess;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 
 /**
  * A chessboard that can hold and rearrange chess pieces.
@@ -13,9 +15,13 @@ public class ChessBoard {
     private static final int BOARD_ROWS = 8;
     private static final int BOARD_COLS = 8;
     private ChessPiece[][] board;
+    private ArrayList<ChessPiece> removedPieces;
+    private boolean initialized;
 
     public ChessBoard() {
         this.board = new ChessPiece[ChessBoard.BOARD_ROWS][ChessBoard.BOARD_COLS];
+        removedPieces = new ArrayList<>();
+        initialized = false;
     }
 
     /**
@@ -23,8 +29,13 @@ public class ChessBoard {
      *
      * @param position where to add the piece to
      * @param piece    the piece to add
+     * @throws IllegalArgumentException if the piece is already on the board
      */
-    public void addPiece(ChessPosition position, ChessPiece piece) {
+    public void addPiece(ChessPosition position, ChessPiece piece) throws IllegalArgumentException {
+        // once the board is set up for a game, only allow that set number of pieces to
+        // be added
+        if (piece != null && initialized && !removedPieces.contains(piece))
+            throw new IllegalArgumentException("The piece is not available to be added to the board");
         board[position.getRow() - 1][position.getColumn() - 1] = piece;
     }
 
@@ -45,7 +56,11 @@ public class ChessBoard {
      * @param position The position to remove the piece from
      */
     public void removePiece(ChessPosition position) {
-        board[position.getRow() - 1][position.getColumn() - 1] = null;
+        ChessPiece piece = getPiece(position);
+        if (piece == null)
+            return;
+        addPiece(position, null);
+        removedPieces.add(piece);
     }
 
     /**
@@ -56,9 +71,15 @@ public class ChessBoard {
      */
     public void movePiece(ChessPosition startPosition, ChessPosition endPosition) {
         ChessPiece piece = this.getPiece(startPosition);
-        // pick up the piece and place it in the new location
+        // pick up the piece and place it in the new location, removing the piece
+        // already there if there is already one
+        this.removePiece(startPosition);
         this.removePiece(endPosition);
         this.addPiece(endPosition, piece);
+    }
+
+    public Collection<ChessPiece> getRemovedPieces() {
+        return (Collection) this.removedPieces.clone();
     }
 
     /**
@@ -68,8 +89,9 @@ public class ChessBoard {
     public void resetBoard() {
         // create a new board
         this.board = new ChessPiece[ChessBoard.BOARD_ROWS][ChessBoard.BOARD_COLS];
+        this.removedPieces = new ArrayList<>();
 
-        // add pieces
+        // add pieces for both teams
         for (ChessGame.TeamColor teamColor : ChessGame.TeamColor.values()) {
             boolean isWhite = teamColor == ChessGame.TeamColor.WHITE;
             int row = isWhite ? 0 : ChessBoard.BOARD_ROWS - 1;
@@ -96,6 +118,7 @@ public class ChessBoard {
                 board[row][i] = new ChessPiece(teamColor, ChessPiece.PieceType.PAWN);
             }
         }
+        this.initialized = true;
     }
 
     @Override
