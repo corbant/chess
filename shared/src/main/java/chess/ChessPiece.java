@@ -50,7 +50,7 @@ public class ChessPiece {
     /**
      * @return Which type of chess piece this piece is
      */
-    public PieceType getType() {
+    public PieceType getPieceType() {
         return this.type;
     }
 
