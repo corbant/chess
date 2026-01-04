@@ -23,9 +23,8 @@ public class ChessBoard {
      *
      * @param position where to add the piece to
      * @param piece    the piece to add
-     * @throws IllegalArgumentException if the piece is already on the board
      */
-    public void addPiece(ChessPosition position, ChessPiece piece) throws IllegalArgumentException {
+    public void addPiece(ChessPosition position, ChessPiece piece) {
         board[position.getRow() - 1][position.getColumn() - 1] = piece;
     }
 
@@ -65,7 +64,6 @@ public class ChessBoard {
         this.removePiece(startPosition);
         this.removePiece(endPosition);
         this.addPiece(endPosition, piece);
-        piece.moved();
     }
 
     /**

@@ -28,6 +28,19 @@ public class ChessMove {
     }
 
     /**
+     * Creates a new ChessMove with the given start and end positions
+     * 
+     * @param startPosition  starting location
+     * @param endPosition    ending location
+     * @param promotionPiece pawn piece promotion type
+     */
+    public ChessMove(ChessPosition startPosition, ChessPosition endPosition) {
+        this.startPosition = startPosition;
+        this.endPosition = endPosition;
+        this.promotionPiece = null;
+    }
+
+    /**
      * @return ChessPosition of starting location
      */
     public ChessPosition getStartPosition() {
