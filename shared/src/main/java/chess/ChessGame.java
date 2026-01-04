@@ -64,11 +64,16 @@ public class ChessGame {
      * @throws InvalidMoveException if move is invalid
      */
     public void makeMove(ChessMove move) throws InvalidMoveException {
-        Collection<ChessMove> validMoves = this.validMoves(move.getStartPosition());
-        if (validMoves == null)
+        ChessPiece piece = board.getPiece(move.getStartPosition());
+        if (piece == null)
             throw new InvalidMoveException("No piece at start position");
+        else if (piece.getTeamColor() != this.currentTeamTurn)
+            throw new InvalidMoveException("Not your turn");
+
+        Collection<ChessMove> validMoves = this.validMoves(move.getStartPosition());
         if (!validMoves.contains(move))
             throw new InvalidMoveException("Move is invalid");
+
         board.movePiece(null, null);
     }
 
@@ -119,5 +124,33 @@ public class ChessGame {
      */
     public ChessBoard getBoard() {
         return this.board;
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((currentTeamTurn == null) ? 0 : currentTeamTurn.hashCode());
+        result = prime * result + ((board == null) ? 0 : board.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        ChessGame other = (ChessGame) obj;
+        if (currentTeamTurn != other.currentTeamTurn)
+            return false;
+        if (board == null) {
+            if (other.board != null)
+                return false;
+        } else if (!board.equals(other.board))
+            return false;
+        return true;
     }
 }
