@@ -1,6 +1,10 @@
 package chess;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+
+import chess.ChessGame.TeamColor;
 
 /**
  * A chessboard that can hold and rearrange chess pieces.
@@ -40,6 +44,39 @@ public class ChessBoard {
     }
 
     /**
+     * Gets the position of the specified team's king
+     * 
+     * @param teamColor which team's king to search for
+     * @return location of the team's king
+     */
+    public ChessPosition getKingPosition(TeamColor teamColor) {
+        ChessPiece king = new ChessPiece(teamColor, ChessPiece.PieceType.KING);
+        ChessPosition position = new ChessPosition(1, 1);
+        for (int row = 1; row <= ChessBoard.BOARD_ROWS; row++) {
+            for (int col = 1; col <= ChessBoard.BOARD_COLS; col++) {
+                position = new ChessPosition(row, col);
+                if (getPiece(position) == king)
+                    break;
+            }
+        }
+        return position;
+    }
+
+    public Collection<ChessPosition> getAllPiecePositions() {
+        ArrayList<ChessPosition> piecePositions = new ArrayList<>();
+        ChessPosition position;
+        for (int row = 1; row <= ChessBoard.BOARD_ROWS; row++) {
+            for (int col = 1; col <= ChessBoard.BOARD_COLS; col++) {
+                position = new ChessPosition(row, col);
+                if (getPiece(position) != null) {
+                    piecePositions.add(position);
+                }
+            }
+        }
+        return piecePositions;
+    }
+
+    /**
      * Removes a chess piece from the given position
      * 
      * @param position The position to remove the piece from
@@ -54,16 +91,17 @@ public class ChessBoard {
     /**
      * Moves a chess piece from one position to another
      * 
-     * @param startPosition position of the piece to move
-     * @param endPosition   location to move the piece to
+     * 
      */
-    public void movePiece(ChessPosition startPosition, ChessPosition endPosition) {
-        ChessPiece piece = this.getPiece(startPosition);
+    public void movePiece(ChessMove move) {
+        ChessPiece piece = this.getPiece(move.getStartPosition());
+        if (move.getPromotionPiece() != null) {
+            piece = new ChessPiece(piece.getTeamColor(), move.getPromotionPiece());
+        }
         // pick up the piece and place it in the new location, removing the piece
         // already there if there is already one
-        this.removePiece(startPosition);
-        this.removePiece(endPosition);
-        this.addPiece(endPosition, piece);
+        this.removePiece(move.getStartPosition());
+        this.addPiece(move.getEndPosition(), piece);
     }
 
     /**
