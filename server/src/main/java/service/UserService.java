@@ -48,8 +48,8 @@ public class UserService {
         return new LoginResult(authSession.username(), authSession.authToken());
     }
 
-    public void logout(LogoutRequest logoutRequest) throws UnauthorizedException, ServerErrorException {
-        AuthData authSession = authDAO.getAuth(logoutRequest.authToken());
+    public void logout(String authToken) throws UnauthorizedException, ServerErrorException {
+        AuthData authSession = authDAO.getAuth(authToken);
         if (authSession == null) {
             throw new UnauthorizedException("Unauthorized");
         }

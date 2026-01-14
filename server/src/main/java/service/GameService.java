@@ -10,7 +10,6 @@ import dataaccess.GameDAO;
 import model.GameData;
 import service.request.GameCreateRequest;
 import service.request.GameJoinRequest;
-import service.request.GameListRequest;
 import service.result.GameCreateResponse;
 import service.result.GameListResponse;
 
@@ -24,19 +23,14 @@ public class GameService {
         this.authDAO = authDAO;
     }
 
-    public void join(GameJoinRequest gameJoinRequest)
-            throws DoesNotExistException, BadRequestException, AlreadyTakenException, ServerErrorException {
+    public void join(GameJoinRequest gameJoinRequest, String authToken)
+            throws DoesNotExistException, AlreadyTakenException, ServerErrorException {
         GameData gameData = gameDAO.getGame(gameJoinRequest.gameID());
         if (gameData == null) {
             throw new DoesNotExistException("Game does not exist");
         }
-        TeamColor requestedColor;
-        try {
-            requestedColor = TeamColor.valueOf(gameJoinRequest.playerColor());
-        } catch (IllegalArgumentException e) {
-            throw new BadRequestException("playerColor is not a valid color");
-        }
-        String playerUsername = authDAO.getAuth(gameJoinRequest.authToken()).username();
+        TeamColor requestedColor = TeamColor.valueOf(gameJoinRequest.playerColor());
+        String playerUsername = authDAO.getAuth(authToken).username();
         GameData updatedGameData;
         if (requestedColor == TeamColor.WHITE) {
             if (gameData.whiteUsername() != null) {
@@ -65,7 +59,7 @@ public class GameService {
         return new GameCreateResponse(gameData.gameID());
     }
 
-    public GameListResponse list(GameListRequest gameListRequest) {
+    public GameListResponse list() {
         Collection<GameData> games = gameDAO.listGames();
         return new GameListResponse((GameData[]) games.toArray());
     }
