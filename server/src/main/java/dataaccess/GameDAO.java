@@ -6,13 +6,13 @@ import model.GameData;
 
 public interface GameDAO {
 
-    GameData createGame();
+    void createGame(GameData gameData);
 
     GameData getGame(int gameID);
 
     Collection<GameData> listGames();
 
-    void updateGame(int gameID);
+    void updateGame(GameData updatedGameData) throws DataAccessException;
 
     void clear();
 }

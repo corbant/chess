@@ -1,22 +1,19 @@
 package dataaccess;
 
 import java.util.ArrayList;
-import java.util.Collection;
 
 import model.UserData;
 
 public class MemoryUserDAO implements UserDAO {
-    private Collection<UserData> users;
+    private ArrayList<UserData> users;
 
     public MemoryUserDAO() {
         users = new ArrayList<>();
     }
 
     @Override
-    public UserData createUser(String username, String password, String email) {
-        UserData user = new UserData(username, password, email);
+    public void createUser(UserData user) {
         users.add(user);
-        return user;
     }
 
     @Override
@@ -31,7 +28,7 @@ public class MemoryUserDAO implements UserDAO {
 
     @Override
     public void clear() {
-        users = new ArrayList<>();
+        users.clear();
     }
 
 }

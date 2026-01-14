@@ -1,8 +1,11 @@
 package service;
 
+import java.util.UUID;
+
 import org.mindrot.jbcrypt.BCrypt;
 
 import dataaccess.AuthDAO;
+import dataaccess.DataAccessException;
 import dataaccess.UserDAO;
 import model.UserData;
 import model.AuthData;
@@ -24,9 +27,10 @@ public class UserService {
             throw new AlreadyTakenException("Username already taken");
         }
         String hashedPassword = BCrypt.hashpw(registerRequest.password(), BCrypt.gensalt());
-        userDAO.createUser(registerRequest.username(), hashedPassword, registerRequest.email());
+        UserData newUser = new UserData(registerRequest.username(), hashedPassword, registerRequest.email());
+        userDAO.createUser(newUser);
 
-        AuthData authSession = authDAO.createAuth(registerRequest.username());
+        AuthData authSession = createAuthSession(newUser.username());
         return new RegisterResult(authSession.username(), authSession.authToken());
     }
 
@@ -40,7 +44,7 @@ public class UserService {
             throw new UnauthorizedException("Unauthorized");
         }
 
-        AuthData authSession = authDAO.createAuth(user.username());
+        AuthData authSession = createAuthSession(user.username());
         return new LoginResult(authSession.username(), authSession.authToken());
     }
 
@@ -51,8 +55,13 @@ public class UserService {
         }
         try {
             authDAO.deleteAuth(authSession.authToken());
-        } catch (Exception e) {
+        } catch (DataAccessException e) {
             throw new ServerErrorException(e.getMessage());
         }
+    }
+
+    private AuthData createAuthSession(String username) {
+        String authToken = UUID.randomUUID().toString();
+        return new AuthData(authToken, username);
     }
 }

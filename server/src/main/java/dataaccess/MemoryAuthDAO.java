@@ -1,24 +1,19 @@
 package dataaccess;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.UUID;
 
 import model.AuthData;
 
 public class MemoryAuthDAO implements AuthDAO {
-    private Collection<AuthData> authSessions;
+    private ArrayList<AuthData> authSessions;
 
     public MemoryAuthDAO() {
         authSessions = new ArrayList<>();
     }
 
     @Override
-    public AuthData createAuth(String username) {
-        String authToken = UUID.randomUUID().toString();
-        AuthData authData = new AuthData(authToken, username);
-        authSessions.add(authData);
-        return authData;
+    public void createAuth(AuthData auth) {
+        authSessions.add(auth);
     }
 
     @Override
@@ -32,13 +27,16 @@ public class MemoryAuthDAO implements AuthDAO {
     }
 
     @Override
-    public void deleteAuth(String authToken) {
-        authSessions.removeIf(authSession -> authSession.authToken() == authToken);
+    public void deleteAuth(String authToken) throws DataAccessException {
+        boolean removed = authSessions.removeIf(authSession -> authSession.authToken() == authToken);
+        if (!removed) {
+            throw new DataAccessException("Auth not found");
+        }
     }
 
     @Override
     public void clear() {
-        authSessions = new ArrayList<>();
+        authSessions.clear();
     }
 
 }

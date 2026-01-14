@@ -6,16 +6,15 @@ import java.util.Collection;
 import model.GameData;
 
 public class MemoryGameDAO implements GameDAO {
-    private Collection<GameData> games;
+    private ArrayList<GameData> games;
 
     public MemoryGameDAO() {
         games = new ArrayList<>();
     }
 
     @Override
-    public GameData createGame() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'createGame'");
+    public void createGame(GameData gameData) {
+        games.add(gameData);
     }
 
     @Override
@@ -34,14 +33,17 @@ public class MemoryGameDAO implements GameDAO {
     }
 
     @Override
-    public void updateGame(int gameID) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'updateGame'");
+    public void updateGame(GameData updatedGameData) throws DataAccessException {
+        boolean removed = games.removeIf(gameData -> gameData.gameID() == updatedGameData.gameID());
+        if (!removed) {
+            throw new DataAccessException("Game not found");
+        }
+        games.add(updatedGameData);
     }
 
     @Override
     public void clear() {
-        games = new ArrayList<>();
+        games.clear();
     }
 
 }

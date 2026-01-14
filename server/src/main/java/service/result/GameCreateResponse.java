@@ -1,5 +1,5 @@
 package service.result;
 
-public record GameCreateResponse(String gameID) {
+public record GameCreateResponse(int gameID) {
 
 }
