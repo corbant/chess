@@ -62,6 +62,8 @@ public class UserService {
 
     private AuthData createAuthSession(String username) {
         String authToken = UUID.randomUUID().toString();
+        AuthData authSession = new AuthData(authToken, username);
+        authDAO.createAuth(authSession);
         return new AuthData(authToken, username);
     }
 }

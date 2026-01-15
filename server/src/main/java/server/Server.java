@@ -8,6 +8,7 @@ import dataaccess.MemoryAuthDAO;
 import dataaccess.MemoryGameDAO;
 import dataaccess.MemoryUserDAO;
 import io.javalin.*;
+import io.javalin.http.BadRequestResponse;
 import service.*;
 import service.request.*;
 import service.result.*;
@@ -21,6 +22,8 @@ public class Server {
     private final AuthDAO authDAO;
     private final UserDAO userDAO;
     private final GameDAO gameDAO;
+
+    private static final String ERROR_MESSAGE_FORMAT = "Error: %s";
 
     public Server() {
         // DAOs
@@ -37,15 +40,20 @@ public class Server {
 
         // Register your endpoints and exception handlers here.
         javalin.post("/user", ctx -> {
-            RegisterRequest registerRequest = ctx.bodyValidator(RegisterRequest.class).get();
+            RegisterRequest registerRequest = ctx.bodyValidator(RegisterRequest.class)
+                    .check(req -> req.username() != null && !req.username().isBlank(), "username required")
+                    .check(req -> req.password() != null && !req.password().isBlank(), "password required")
+                    .check(req -> req.email() != null && !req.email().isBlank(), "email required").get();
             RegisterResult registerResult = userService.register(registerRequest);
             ctx.status(200).json(registerResult);
         });
 
         javalin.post("/session", ctx -> {
-            LoginRequest loginRequest = ctx.bodyValidator(LoginRequest.class).get();
+            LoginRequest loginRequest = ctx.bodyValidator(LoginRequest.class)
+                    .check(req -> req.username() != null && !req.username().isBlank(), "username required")
+                    .check(req -> req.password() != null && !req.password().isBlank(), "password required").get();
             LoginResult loginResult = userService.login(loginRequest);
-            ctx.status(201).json(loginResult);
+            ctx.status(200).json(loginResult);
         });
 
         javalin.delete("/session", ctx -> {
@@ -62,20 +70,23 @@ public class Server {
         });
 
         javalin.post("/game", ctx -> {
-            GameCreateRequest gameCreateRequest = ctx.bodyValidator(GameCreateRequest.class).get();
+            GameCreateRequest gameCreateRequest = ctx.bodyValidator(GameCreateRequest.class)
+                    .check(req -> req.gameName() != null && !req.gameName().isBlank(), "gameName required").get();
             GameCreateResponse gameCreateResponse = gameService.create(gameCreateRequest);
             ctx.status(200).json(gameCreateResponse);
         });
 
         javalin.put("/game", ctx -> {
             GameJoinRequest gameJoinRequest = ctx.bodyValidator(GameJoinRequest.class).check(req -> {
+                if (req.playerColor() == null || req.playerColor().isBlank())
+                    return false;
                 try {
                     TeamColor.valueOf(req.playerColor());
                     return true;
                 } catch (IllegalArgumentException e) {
                     return false;
                 }
-            }, "invalid player color").get();
+            }, "invalid player color").check(req -> req.gameID() > 0, "invalid game ID").get();
             String authToken = ctx.header("authorization");
             gameService.join(gameJoinRequest, authToken);
             ctx.status(200);
@@ -86,7 +97,31 @@ public class Server {
             ctx.status(200);
         });
 
-        // TODO: add exception handlers
+        // exception handlers
+        javalin.exception(ServerErrorException.class, (e, ctx) -> {
+            String error = String.format(ERROR_MESSAGE_FORMAT, e.getMessage());
+            ctx.status(500).json(new FailureResponse(error));
+        });
+
+        javalin.exception(AlreadyTakenException.class, (e, ctx) -> {
+            String error = String.format(ERROR_MESSAGE_FORMAT, "already taken");
+            ctx.status(403).json(new FailureResponse(error));
+        });
+
+        javalin.exception(DoesNotExistException.class, (e, ctx) -> {
+            String error = String.format(ERROR_MESSAGE_FORMAT, "not found");
+            ctx.status(404).json(new FailureResponse(error));
+        });
+
+        javalin.exception(UnauthorizedException.class, (e, ctx) -> {
+            String error = String.format(ERROR_MESSAGE_FORMAT, "unauthorized");
+            ctx.status(401).json(new FailureResponse(error));
+        });
+
+        javalin.error(400, ctx -> {
+            String error = String.format(ERROR_MESSAGE_FORMAT, "bad request");
+            ctx.status(400).json(new FailureResponse(error));
+        });
     }
 
     public int run(int desiredPort) {

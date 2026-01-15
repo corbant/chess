@@ -61,6 +61,6 @@ public class GameService {
 
     public GameListResponse list() {
         Collection<GameData> games = gameDAO.listGames();
-        return new GameListResponse((GameData[]) games.toArray());
+        return new GameListResponse(games.toArray(new GameData[0]));
     }
 }
