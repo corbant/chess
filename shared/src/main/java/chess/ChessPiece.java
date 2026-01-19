@@ -87,79 +87,54 @@ public class ChessPiece {
 
     private Collection<ChessMove> kingMoves(ChessBoard board, ChessPosition myPosition) {
         ChessPosition possiblePosition;
-        ChessPiece pieceAtLocation;
         Collection<ChessMove> possibleMoves = new ArrayList<>();
         // can move in any direction one square
         // up
         possiblePosition = new ChessPosition(myPosition.getRow() + 1, myPosition.getColumn());
-        if (isInBounds(possiblePosition)) {
-            pieceAtLocation = board.getPiece(possiblePosition);
-            if (pieceAtLocation == null || pieceAtLocation.teamColor != this.teamColor) {
-                possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-            }
+        if (canMoveToPosition(board, possiblePosition)) {
+            possibleMoves.add(new ChessMove(myPosition, possiblePosition));
         }
 
         // up right
         possiblePosition = new ChessPosition(myPosition.getRow() + 1, myPosition.getColumn() + 1);
-        if (isInBounds(possiblePosition)) {
-            pieceAtLocation = board.getPiece(possiblePosition);
-            if (pieceAtLocation == null || pieceAtLocation.teamColor != this.teamColor) {
-                possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-            }
+        if (canMoveToPosition(board, possiblePosition)) {
+            possibleMoves.add(new ChessMove(myPosition, possiblePosition));
         }
 
         // right
         possiblePosition = new ChessPosition(myPosition.getRow(), myPosition.getColumn() + 1);
-        if (isInBounds(possiblePosition)) {
-            pieceAtLocation = board.getPiece(possiblePosition);
-            if (pieceAtLocation == null || pieceAtLocation.teamColor != this.teamColor) {
-                possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-            }
+        if (canMoveToPosition(board, possiblePosition)) {
+            possibleMoves.add(new ChessMove(myPosition, possiblePosition));
         }
 
         // down right
         possiblePosition = new ChessPosition(myPosition.getRow() - 1, myPosition.getColumn() + 1);
-        if (isInBounds(possiblePosition)) {
-            pieceAtLocation = board.getPiece(possiblePosition);
-            if (pieceAtLocation == null || pieceAtLocation.teamColor != this.teamColor) {
-                possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-            }
+        if (canMoveToPosition(board, possiblePosition)) {
+            possibleMoves.add(new ChessMove(myPosition, possiblePosition));
         }
 
         // down
         possiblePosition = new ChessPosition(myPosition.getRow() - 1, myPosition.getColumn());
-        if (isInBounds(possiblePosition)) {
-            pieceAtLocation = board.getPiece(possiblePosition);
-            if (pieceAtLocation == null || pieceAtLocation.teamColor != this.teamColor) {
-                possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-            }
+        if (canMoveToPosition(board, possiblePosition)) {
+            possibleMoves.add(new ChessMove(myPosition, possiblePosition));
         }
 
         // down left
         possiblePosition = new ChessPosition(myPosition.getRow() - 1, myPosition.getColumn() - 1);
-        if (isInBounds(possiblePosition)) {
-            pieceAtLocation = board.getPiece(possiblePosition);
-            if (pieceAtLocation == null || pieceAtLocation.teamColor != this.teamColor) {
-                possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-            }
+        if (canMoveToPosition(board, possiblePosition)) {
+            possibleMoves.add(new ChessMove(myPosition, possiblePosition));
         }
 
         // left
         possiblePosition = new ChessPosition(myPosition.getRow(), myPosition.getColumn() - 1);
-        if (isInBounds(possiblePosition)) {
-            pieceAtLocation = board.getPiece(possiblePosition);
-            if (pieceAtLocation == null || pieceAtLocation.teamColor != this.teamColor) {
-                possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-            }
+        if (canMoveToPosition(board, possiblePosition)) {
+            possibleMoves.add(new ChessMove(myPosition, possiblePosition));
         }
 
         // up left
         possiblePosition = new ChessPosition(myPosition.getRow() + 1, myPosition.getColumn() - 1);
-        if (isInBounds(possiblePosition)) {
-            pieceAtLocation = board.getPiece(possiblePosition);
-            if (pieceAtLocation == null || pieceAtLocation.teamColor != this.teamColor) {
-                possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-            }
+        if (canMoveToPosition(board, possiblePosition)) {
+            possibleMoves.add(new ChessMove(myPosition, possiblePosition));
         }
         return possibleMoves;
     }
@@ -218,80 +193,55 @@ public class ChessPiece {
 
     private Collection<ChessMove> knightMoves(ChessBoard board, ChessPosition myPosition) {
         ChessPosition possiblePosition;
-        ChessPiece pieceAtLocation;
         Collection<ChessMove> possibleMoves = new ArrayList<>();
 
         // can jump forward 2, to the side 1
         // up right
         possiblePosition = new ChessPosition(myPosition.getRow() + 2, myPosition.getColumn() + 1);
-        if (isInBounds(possiblePosition)) {
-            pieceAtLocation = board.getPiece(possiblePosition);
-            if (pieceAtLocation == null || pieceAtLocation.teamColor != this.teamColor) {
-                possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-            }
+        if (canMoveToPosition(board, possiblePosition)) {
+            possibleMoves.add(new ChessMove(myPosition, possiblePosition));
         }
 
         // right up
         possiblePosition = new ChessPosition(myPosition.getRow() + 1, myPosition.getColumn() + 2);
-        if (isInBounds(possiblePosition)) {
-            pieceAtLocation = board.getPiece(possiblePosition);
-            if (pieceAtLocation == null || pieceAtLocation.teamColor != this.teamColor) {
-                possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-            }
+        if (canMoveToPosition(board, possiblePosition)) {
+            possibleMoves.add(new ChessMove(myPosition, possiblePosition));
         }
 
         // right down
         possiblePosition = new ChessPosition(myPosition.getRow() - 1, myPosition.getColumn() + 2);
-        if (isInBounds(possiblePosition)) {
-            pieceAtLocation = board.getPiece(possiblePosition);
-            if (pieceAtLocation == null || pieceAtLocation.teamColor != this.teamColor) {
-                possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-            }
+        if (canMoveToPosition(board, possiblePosition)) {
+            possibleMoves.add(new ChessMove(myPosition, possiblePosition));
         }
 
         // down right
         possiblePosition = new ChessPosition(myPosition.getRow() - 2, myPosition.getColumn() + 1);
-        if (isInBounds(possiblePosition)) {
-            pieceAtLocation = board.getPiece(possiblePosition);
-            if (pieceAtLocation == null || pieceAtLocation.teamColor != this.teamColor) {
-                possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-            }
+        if (canMoveToPosition(board, possiblePosition)) {
+            possibleMoves.add(new ChessMove(myPosition, possiblePosition));
         }
 
         // down left
         possiblePosition = new ChessPosition(myPosition.getRow() - 2, myPosition.getColumn() - 1);
-        if (isInBounds(possiblePosition)) {
-            pieceAtLocation = board.getPiece(possiblePosition);
-            if (pieceAtLocation == null || pieceAtLocation.teamColor != this.teamColor) {
-                possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-            }
+        if (canMoveToPosition(board, possiblePosition)) {
+            possibleMoves.add(new ChessMove(myPosition, possiblePosition));
         }
 
         // left down
         possiblePosition = new ChessPosition(myPosition.getRow() - 1, myPosition.getColumn() - 2);
-        if (isInBounds(possiblePosition)) {
-            pieceAtLocation = board.getPiece(possiblePosition);
-            if (pieceAtLocation == null || pieceAtLocation.teamColor != this.teamColor) {
-                possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-            }
+        if (canMoveToPosition(board, possiblePosition)) {
+            possibleMoves.add(new ChessMove(myPosition, possiblePosition));
         }
 
         // left up
         possiblePosition = new ChessPosition(myPosition.getRow() + 1, myPosition.getColumn() - 2);
-        if (isInBounds(possiblePosition)) {
-            pieceAtLocation = board.getPiece(possiblePosition);
-            if (pieceAtLocation == null || pieceAtLocation.teamColor != this.teamColor) {
-                possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-            }
+        if (canMoveToPosition(board, possiblePosition)) {
+            possibleMoves.add(new ChessMove(myPosition, possiblePosition));
         }
 
         // up left
         possiblePosition = new ChessPosition(myPosition.getRow() + 2, myPosition.getColumn() - 1);
-        if (isInBounds(possiblePosition)) {
-            pieceAtLocation = board.getPiece(possiblePosition);
-            if (pieceAtLocation == null || pieceAtLocation.teamColor != this.teamColor) {
-                possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-            }
+        if (canMoveToPosition(board, possiblePosition)) {
+            possibleMoves.add(new ChessMove(myPosition, possiblePosition));
         }
 
         return possibleMoves;
@@ -423,6 +373,16 @@ public class ChessPiece {
                     possiblePosition.getColumn() + colChange);
         }
         return moves;
+    }
+
+    private boolean canMoveToPosition(ChessBoard board, ChessPosition position) {
+        if (isInBounds(position)) {
+            ChessPiece pieceAtLocation = board.getPiece(position);
+            if (pieceAtLocation == null || pieceAtLocation.teamColor != this.teamColor) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
