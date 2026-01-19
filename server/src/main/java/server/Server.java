@@ -39,7 +39,7 @@ public class Server {
         dbService = new DBService(authDAO, userDAO, gameDAO);
         // web server
         javalin = Javalin.create(config -> {
-            config.staticFiles.add("resources/web");
+            config.staticFiles.add("web");
             var serializer = new Gson();
             config.jsonMapper(new JavalinGson(serializer, false));
         });
