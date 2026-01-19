@@ -62,519 +62,571 @@ public class ChessPiece {
      * @return Collection of valid moves
      */
     public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition) {
-
-        Collection<ChessMove> possibleMoves = new ArrayList<ChessMove>();
-        ChessPosition possiblePosition;
-        ChessPiece pieceAtLocation;
-
         switch (type) {
             case PieceType.KING:
-                // can move in any direction one square
-                // up
-                possiblePosition = new ChessPosition(myPosition.getRow() + 1, myPosition.getColumn());
-                if (isInBounds(possiblePosition)) {
-                    pieceAtLocation = board.getPiece(possiblePosition);
-                    if (pieceAtLocation == null || pieceAtLocation.teamColor != this.teamColor) {
-                        possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-                    }
-                }
+                return kingMoves(board, myPosition);
 
-                // up right
-                possiblePosition = new ChessPosition(myPosition.getRow() + 1, myPosition.getColumn() + 1);
-                if (isInBounds(possiblePosition)) {
-                    pieceAtLocation = board.getPiece(possiblePosition);
-                    if (pieceAtLocation == null || pieceAtLocation.teamColor != this.teamColor) {
-                        possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-                    }
-                }
-
-                // right
-                possiblePosition = new ChessPosition(myPosition.getRow(), myPosition.getColumn() + 1);
-                if (isInBounds(possiblePosition)) {
-                    pieceAtLocation = board.getPiece(possiblePosition);
-                    if (pieceAtLocation == null || pieceAtLocation.teamColor != this.teamColor) {
-                        possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-                    }
-                }
-
-                // down right
-                possiblePosition = new ChessPosition(myPosition.getRow() - 1, myPosition.getColumn() + 1);
-                if (isInBounds(possiblePosition)) {
-                    pieceAtLocation = board.getPiece(possiblePosition);
-                    if (pieceAtLocation == null || pieceAtLocation.teamColor != this.teamColor) {
-                        possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-                    }
-                }
-
-                // down
-                possiblePosition = new ChessPosition(myPosition.getRow() - 1, myPosition.getColumn());
-                if (isInBounds(possiblePosition)) {
-                    pieceAtLocation = board.getPiece(possiblePosition);
-                    if (pieceAtLocation == null || pieceAtLocation.teamColor != this.teamColor) {
-                        possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-                    }
-                }
-
-                // down left
-                possiblePosition = new ChessPosition(myPosition.getRow() - 1, myPosition.getColumn() - 1);
-                if (isInBounds(possiblePosition)) {
-                    pieceAtLocation = board.getPiece(possiblePosition);
-                    if (pieceAtLocation == null || pieceAtLocation.teamColor != this.teamColor) {
-                        possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-                    }
-                }
-
-                // left
-                possiblePosition = new ChessPosition(myPosition.getRow(), myPosition.getColumn() - 1);
-                if (isInBounds(possiblePosition)) {
-                    pieceAtLocation = board.getPiece(possiblePosition);
-                    if (pieceAtLocation == null || pieceAtLocation.teamColor != this.teamColor) {
-                        possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-                    }
-                }
-
-                // up left
-                possiblePosition = new ChessPosition(myPosition.getRow() + 1, myPosition.getColumn() - 1);
-                if (isInBounds(possiblePosition)) {
-                    pieceAtLocation = board.getPiece(possiblePosition);
-                    if (pieceAtLocation == null || pieceAtLocation.teamColor != this.teamColor) {
-                        possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-                    }
-                }
-                break;
             case PieceType.QUEEN:
-                // can move in any direction any amount
-                // straight moves
-                // up
-                for (int i = myPosition.getRow() + 1; i <= ChessBoard.BOARD_ROWS; i++) {
-                    possiblePosition = new ChessPosition(i, myPosition.getColumn());
-                    pieceAtLocation = board.getPiece(possiblePosition);
-                    // if there is already a piece there
-                    if (pieceAtLocation != null) {
-                        if (pieceAtLocation.teamColor == this.teamColor) {
-                            break;
-                        } else {
-                            possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-                            break;
-                        }
-                    }
-                    // the space is empty so the piece can move there
-                    possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-                }
-                // down
-                for (int i = myPosition.getRow() - 1; i > 0; i--) {
-                    possiblePosition = new ChessPosition(i, myPosition.getColumn());
-                    pieceAtLocation = board.getPiece(possiblePosition);
-                    // if there is already a piece there
-                    if (pieceAtLocation != null) {
-                        if (pieceAtLocation.teamColor == this.teamColor) {
-                            break;
-                        } else {
-                            possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-                            break;
-                        }
-                    }
-                    // the space is empty so the piece can move there
-                    possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-                }
-                // left
-                for (int i = myPosition.getColumn() - 1; i > 0; i--) {
-                    possiblePosition = new ChessPosition(myPosition.getRow(), i);
-                    pieceAtLocation = board.getPiece(possiblePosition);
-                    // if there is already a piece there
-                    if (pieceAtLocation != null) {
-                        if (pieceAtLocation.teamColor == this.teamColor) {
-                            break;
-                        } else {
-                            possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-                            break;
-                        }
-                    }
-                    // the space is empty so the piece can move there
-                    possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-                }
-                // right
-                for (int i = myPosition.getColumn() + 1; i <= ChessBoard.BOARD_COLS; i++) {
-                    possiblePosition = new ChessPosition(myPosition.getRow(), i);
-                    pieceAtLocation = board.getPiece(possiblePosition);
-                    // if there is already a piece there
-                    if (pieceAtLocation != null) {
-                        if (pieceAtLocation.teamColor == this.teamColor) {
-                            break;
-                        } else {
-                            possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-                            break;
-                        }
-                    }
-                    // the space is empty so the piece can move there
-                    possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-                }
+                return queenMoves(board, myPosition);
 
-                // diagonal moves
-                // up to the right
-                for (int i = 1; myPosition.getColumn() + i <= ChessBoard.BOARD_COLS
-                        && myPosition.getRow() + i <= ChessBoard.BOARD_ROWS; i++) {
-                    possiblePosition = new ChessPosition(myPosition.getRow() + i,
-                            myPosition.getColumn() + i);
-                    pieceAtLocation = board.getPiece(possiblePosition);
-                    // if there is already a piece there
-                    if (pieceAtLocation != null) {
-                        if (pieceAtLocation.teamColor == this.teamColor) {
-                            break;
-                        } else {
-                            possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-                            break;
-                        }
-                    }
-                    // the space is empty so the piece can move there
-                    possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-                }
-                // up to the left
-                for (int i = 1; myPosition.getColumn() - i > 0
-                        && myPosition.getRow() + i <= ChessBoard.BOARD_ROWS; i++) {
-                    possiblePosition = new ChessPosition(myPosition.getRow() + i,
-                            myPosition.getColumn() - i);
-                    pieceAtLocation = board.getPiece(possiblePosition);
-                    // if there is already a piece there
-                    if (pieceAtLocation != null) {
-                        if (pieceAtLocation.teamColor == this.teamColor) {
-                            break;
-                        } else {
-                            possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-                            break;
-                        }
-                    }
-                    // the space is empty so the piece can move there
-                    possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-                }
-                // down to the right
-                for (int i = 1; myPosition.getColumn() + i <= ChessBoard.BOARD_COLS
-                        && myPosition.getRow() - i > 0; i++) {
-                    possiblePosition = new ChessPosition(myPosition.getRow() - i,
-                            myPosition.getColumn() + i);
-                    pieceAtLocation = board.getPiece(possiblePosition);
-                    // if there is already a piece there
-                    if (pieceAtLocation != null) {
-                        if (pieceAtLocation.teamColor == this.teamColor) {
-                            break;
-                        } else {
-                            possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-                            break;
-                        }
-                    }
-                    // the space is empty so the piece can move there
-                    possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-                }
-                // down to the left
-                for (int i = 1; myPosition.getColumn() - i > 0
-                        && myPosition.getRow() - i > 0; i++) {
-                    possiblePosition = new ChessPosition(myPosition.getRow() - i,
-                            myPosition.getColumn() - i);
-                    pieceAtLocation = board.getPiece(possiblePosition);
-                    // if there is already a piece there
-                    if (pieceAtLocation != null) {
-                        if (pieceAtLocation.teamColor == this.teamColor) {
-                            break;
-                        } else {
-                            possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-                            break;
-                        }
-                    }
-                    // the space is empty so the piece can move there
-                    possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-                }
-                break;
             case PieceType.BISHOP:
-                // can move diagonally any amount
-                // up to the right
-                for (int i = 1; myPosition.getColumn() + i <= ChessBoard.BOARD_COLS
-                        && myPosition.getRow() + i <= ChessBoard.BOARD_ROWS; i++) {
-                    possiblePosition = new ChessPosition(myPosition.getRow() + i,
-                            myPosition.getColumn() + i);
-                    pieceAtLocation = board.getPiece(possiblePosition);
-                    // if there is already a piece there
-                    if (pieceAtLocation != null) {
-                        if (pieceAtLocation.teamColor == this.teamColor) {
-                            break;
-                        } else {
-                            possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-                            break;
-                        }
-                    }
-                    // the space is empty so the piece can move there
-                    possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-                }
-                // up to the left
-                for (int i = 1; myPosition.getColumn() - i > 0
-                        && myPosition.getRow() + i <= ChessBoard.BOARD_ROWS; i++) {
-                    possiblePosition = new ChessPosition(myPosition.getRow() + i,
-                            myPosition.getColumn() - i);
-                    pieceAtLocation = board.getPiece(possiblePosition);
-                    // if there is already a piece there
-                    if (pieceAtLocation != null) {
-                        if (pieceAtLocation.teamColor == this.teamColor) {
-                            break;
-                        } else {
-                            possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-                            break;
-                        }
-                    }
-                    // the space is empty so the piece can move there
-                    possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-                }
-                // down to the right
-                for (int i = 1; myPosition.getColumn() + i <= ChessBoard.BOARD_COLS
-                        && myPosition.getRow() - i > 0; i++) {
-                    possiblePosition = new ChessPosition(myPosition.getRow() - i,
-                            myPosition.getColumn() + i);
-                    pieceAtLocation = board.getPiece(possiblePosition);
-                    // if there is already a piece there
-                    if (pieceAtLocation != null) {
-                        if (pieceAtLocation.teamColor == this.teamColor) {
-                            break;
-                        } else {
-                            possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-                            break;
-                        }
-                    }
-                    // the space is empty so the piece can move there
-                    possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-                }
-                // down to the left
-                for (int i = 1; myPosition.getColumn() - i > 0
-                        && myPosition.getRow() - i > 0; i++) {
-                    possiblePosition = new ChessPosition(myPosition.getRow() - i,
-                            myPosition.getColumn() - i);
-                    pieceAtLocation = board.getPiece(possiblePosition);
-                    // if there is already a piece there
-                    if (pieceAtLocation != null) {
-                        if (pieceAtLocation.teamColor == this.teamColor) {
-                            break;
-                        } else {
-                            possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-                            break;
-                        }
-                    }
-                    // the space is empty so the piece can move there
-                    possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-                }
-                break;
+                return bishopMoves(board, myPosition);
+
             case PieceType.KNIGHT:
-                // can jump forward 2, to the side 1
-                // up right
-                possiblePosition = new ChessPosition(myPosition.getRow() + 2, myPosition.getColumn() + 1);
-                if (isInBounds(possiblePosition)) {
-                    pieceAtLocation = board.getPiece(possiblePosition);
-                    if (pieceAtLocation == null || pieceAtLocation.teamColor != this.teamColor) {
-                        possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-                    }
-                }
+                return knightMoves(board, myPosition);
 
-                // right up
-                possiblePosition = new ChessPosition(myPosition.getRow() + 1, myPosition.getColumn() + 2);
-                if (isInBounds(possiblePosition)) {
-                    pieceAtLocation = board.getPiece(possiblePosition);
-                    if (pieceAtLocation == null || pieceAtLocation.teamColor != this.teamColor) {
-                        possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-                    }
-                }
-
-                // right down
-                possiblePosition = new ChessPosition(myPosition.getRow() - 1, myPosition.getColumn() + 2);
-                if (isInBounds(possiblePosition)) {
-                    pieceAtLocation = board.getPiece(possiblePosition);
-                    if (pieceAtLocation == null || pieceAtLocation.teamColor != this.teamColor) {
-                        possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-                    }
-                }
-
-                // down right
-                possiblePosition = new ChessPosition(myPosition.getRow() - 2, myPosition.getColumn() + 1);
-                if (isInBounds(possiblePosition)) {
-                    pieceAtLocation = board.getPiece(possiblePosition);
-                    if (pieceAtLocation == null || pieceAtLocation.teamColor != this.teamColor) {
-                        possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-                    }
-                }
-
-                // down left
-                possiblePosition = new ChessPosition(myPosition.getRow() - 2, myPosition.getColumn() - 1);
-                if (isInBounds(possiblePosition)) {
-                    pieceAtLocation = board.getPiece(possiblePosition);
-                    if (pieceAtLocation == null || pieceAtLocation.teamColor != this.teamColor) {
-                        possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-                    }
-                }
-
-                // left down
-                possiblePosition = new ChessPosition(myPosition.getRow() - 1, myPosition.getColumn() - 2);
-                if (isInBounds(possiblePosition)) {
-                    pieceAtLocation = board.getPiece(possiblePosition);
-                    if (pieceAtLocation == null || pieceAtLocation.teamColor != this.teamColor) {
-                        possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-                    }
-                }
-
-                // left up
-                possiblePosition = new ChessPosition(myPosition.getRow() + 1, myPosition.getColumn() - 2);
-                if (isInBounds(possiblePosition)) {
-                    pieceAtLocation = board.getPiece(possiblePosition);
-                    if (pieceAtLocation == null || pieceAtLocation.teamColor != this.teamColor) {
-                        possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-                    }
-                }
-
-                // up left
-                possiblePosition = new ChessPosition(myPosition.getRow() + 2, myPosition.getColumn() - 1);
-                if (isInBounds(possiblePosition)) {
-                    pieceAtLocation = board.getPiece(possiblePosition);
-                    if (pieceAtLocation == null || pieceAtLocation.teamColor != this.teamColor) {
-                        possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-                    }
-                }
-                break;
             case PieceType.ROOK:
-                // can move in a straight line any amount
-                // up
-                for (int i = myPosition.getRow() + 1; i <= ChessBoard.BOARD_ROWS; i++) {
-                    possiblePosition = new ChessPosition(i, myPosition.getColumn());
-                    pieceAtLocation = board.getPiece(possiblePosition);
-                    // if there is already a piece there
-                    if (pieceAtLocation != null) {
-                        if (pieceAtLocation.teamColor == this.teamColor) {
-                            break;
-                        } else {
-                            possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-                            break;
-                        }
-                    }
-                    // the space is empty so the piece can move there
-                    possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-                }
-                // down
-                for (int i = myPosition.getRow() - 1; i > 0; i--) {
-                    possiblePosition = new ChessPosition(i, myPosition.getColumn());
-                    pieceAtLocation = board.getPiece(possiblePosition);
-                    // if there is already a piece there
-                    if (pieceAtLocation != null) {
-                        if (pieceAtLocation.teamColor == this.teamColor) {
-                            break;
-                        } else {
-                            possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-                            break;
-                        }
-                    }
-                    // the space is empty so the piece can move there
-                    possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-                }
-                // left
-                for (int i = myPosition.getColumn() - 1; i > 0; i--) {
-                    possiblePosition = new ChessPosition(myPosition.getRow(), i);
-                    pieceAtLocation = board.getPiece(possiblePosition);
-                    // if there is already a piece there
-                    if (pieceAtLocation != null) {
-                        if (pieceAtLocation.teamColor == this.teamColor) {
-                            break;
-                        } else {
-                            possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-                            break;
-                        }
-                    }
-                    // the space is empty so the piece can move there
-                    possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-                }
-                // right
-                for (int i = myPosition.getColumn() + 1; i <= ChessBoard.BOARD_COLS; i++) {
-                    possiblePosition = new ChessPosition(myPosition.getRow(), i);
-                    pieceAtLocation = board.getPiece(possiblePosition);
-                    // if there is already a piece there
-                    if (pieceAtLocation != null) {
-                        if (pieceAtLocation.teamColor == this.teamColor) {
-                            break;
-                        } else {
-                            possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-                            break;
-                        }
-                    }
-                    // the space is empty so the piece can move there
-                    possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-                }
-                break;
+                return rookMoves(board, myPosition);
+
             case PieceType.PAWN:
-                // can move forward 1, or if it has not moved then it can move 2 squares,
-                // attacks on the diagonals, can be promoted as well if it reached the end of
-                // the board
-                boolean canPromote = false;
-                final boolean IS_WHITE = this.teamColor == ChessGame.TeamColor.WHITE;
-                final boolean HAS_MOVED = (IS_WHITE && myPosition.getRow() != 2)
-                        || (!IS_WHITE && myPosition.getRow() != ChessBoard.BOARD_ROWS - 1);
-                final int DIRECTION = IS_WHITE ? 1 : -1;
+                return pawnMoves(board, myPosition);
+        }
 
-                possiblePosition = new ChessPosition(myPosition.getRow() + 1 * DIRECTION, myPosition.getColumn());
-                if ((this.teamColor == ChessGame.TeamColor.WHITE && possiblePosition.getRow() == ChessBoard.BOARD_ROWS)
-                        || (this.teamColor == ChessGame.TeamColor.BLACK && possiblePosition.getRow() == 1)) {
-                    // Pawn can be promoted
-                    canPromote = true;
+        return new ArrayList<ChessMove>();
+    }
+
+    private Collection<ChessMove> kingMoves(ChessBoard board, ChessPosition myPosition) {
+        ChessPosition possiblePosition;
+        ChessPiece pieceAtLocation;
+        Collection<ChessMove> possibleMoves = new ArrayList<>();
+        // can move in any direction one square
+        // up
+        possiblePosition = new ChessPosition(myPosition.getRow() + 1, myPosition.getColumn());
+        if (isInBounds(possiblePosition)) {
+            pieceAtLocation = board.getPiece(possiblePosition);
+            if (pieceAtLocation == null || pieceAtLocation.teamColor != this.teamColor) {
+                possibleMoves.add(new ChessMove(myPosition, possiblePosition));
+            }
+        }
+
+        // up right
+        possiblePosition = new ChessPosition(myPosition.getRow() + 1, myPosition.getColumn() + 1);
+        if (isInBounds(possiblePosition)) {
+            pieceAtLocation = board.getPiece(possiblePosition);
+            if (pieceAtLocation == null || pieceAtLocation.teamColor != this.teamColor) {
+                possibleMoves.add(new ChessMove(myPosition, possiblePosition));
+            }
+        }
+
+        // right
+        possiblePosition = new ChessPosition(myPosition.getRow(), myPosition.getColumn() + 1);
+        if (isInBounds(possiblePosition)) {
+            pieceAtLocation = board.getPiece(possiblePosition);
+            if (pieceAtLocation == null || pieceAtLocation.teamColor != this.teamColor) {
+                possibleMoves.add(new ChessMove(myPosition, possiblePosition));
+            }
+        }
+
+        // down right
+        possiblePosition = new ChessPosition(myPosition.getRow() - 1, myPosition.getColumn() + 1);
+        if (isInBounds(possiblePosition)) {
+            pieceAtLocation = board.getPiece(possiblePosition);
+            if (pieceAtLocation == null || pieceAtLocation.teamColor != this.teamColor) {
+                possibleMoves.add(new ChessMove(myPosition, possiblePosition));
+            }
+        }
+
+        // down
+        possiblePosition = new ChessPosition(myPosition.getRow() - 1, myPosition.getColumn());
+        if (isInBounds(possiblePosition)) {
+            pieceAtLocation = board.getPiece(possiblePosition);
+            if (pieceAtLocation == null || pieceAtLocation.teamColor != this.teamColor) {
+                possibleMoves.add(new ChessMove(myPosition, possiblePosition));
+            }
+        }
+
+        // down left
+        possiblePosition = new ChessPosition(myPosition.getRow() - 1, myPosition.getColumn() - 1);
+        if (isInBounds(possiblePosition)) {
+            pieceAtLocation = board.getPiece(possiblePosition);
+            if (pieceAtLocation == null || pieceAtLocation.teamColor != this.teamColor) {
+                possibleMoves.add(new ChessMove(myPosition, possiblePosition));
+            }
+        }
+
+        // left
+        possiblePosition = new ChessPosition(myPosition.getRow(), myPosition.getColumn() - 1);
+        if (isInBounds(possiblePosition)) {
+            pieceAtLocation = board.getPiece(possiblePosition);
+            if (pieceAtLocation == null || pieceAtLocation.teamColor != this.teamColor) {
+                possibleMoves.add(new ChessMove(myPosition, possiblePosition));
+            }
+        }
+
+        // up left
+        possiblePosition = new ChessPosition(myPosition.getRow() + 1, myPosition.getColumn() - 1);
+        if (isInBounds(possiblePosition)) {
+            pieceAtLocation = board.getPiece(possiblePosition);
+            if (pieceAtLocation == null || pieceAtLocation.teamColor != this.teamColor) {
+                possibleMoves.add(new ChessMove(myPosition, possiblePosition));
+            }
+        }
+        return possibleMoves;
+    }
+
+    private Collection<ChessMove> queenMoves(ChessBoard board, ChessPosition myPosition) {
+        ChessPosition possiblePosition;
+        ChessPiece pieceAtLocation;
+        Collection<ChessMove> possibleMoves = new ArrayList<>();
+
+        // can move in any direction any amount
+        // straight moves
+        // up
+        for (int i = myPosition.getRow() + 1; i <= ChessBoard.BOARD_ROWS; i++) {
+            possiblePosition = new ChessPosition(i, myPosition.getColumn());
+            pieceAtLocation = board.getPiece(possiblePosition);
+            // if there is already a piece there
+            if (pieceAtLocation != null) {
+                if (pieceAtLocation.teamColor == this.teamColor) {
+                    break;
+                } else {
+                    possibleMoves.add(new ChessMove(myPosition, possiblePosition));
+                    break;
                 }
+            }
+            // the space is empty so the piece can move there
+            possibleMoves.add(new ChessMove(myPosition, possiblePosition));
+        }
+        // down
+        for (int i = myPosition.getRow() - 1; i > 0; i--) {
+            possiblePosition = new ChessPosition(i, myPosition.getColumn());
+            pieceAtLocation = board.getPiece(possiblePosition);
+            // if there is already a piece there
+            if (pieceAtLocation != null) {
+                if (pieceAtLocation.teamColor == this.teamColor) {
+                    break;
+                } else {
+                    possibleMoves.add(new ChessMove(myPosition, possiblePosition));
+                    break;
+                }
+            }
+            // the space is empty so the piece can move there
+            possibleMoves.add(new ChessMove(myPosition, possiblePosition));
+        }
+        // left
+        for (int i = myPosition.getColumn() - 1; i > 0; i--) {
+            possiblePosition = new ChessPosition(myPosition.getRow(), i);
+            pieceAtLocation = board.getPiece(possiblePosition);
+            // if there is already a piece there
+            if (pieceAtLocation != null) {
+                if (pieceAtLocation.teamColor == this.teamColor) {
+                    break;
+                } else {
+                    possibleMoves.add(new ChessMove(myPosition, possiblePosition));
+                    break;
+                }
+            }
+            // the space is empty so the piece can move there
+            possibleMoves.add(new ChessMove(myPosition, possiblePosition));
+        }
+        // right
+        for (int i = myPosition.getColumn() + 1; i <= ChessBoard.BOARD_COLS; i++) {
+            possiblePosition = new ChessPosition(myPosition.getRow(), i);
+            pieceAtLocation = board.getPiece(possiblePosition);
+            // if there is already a piece there
+            if (pieceAtLocation != null) {
+                if (pieceAtLocation.teamColor == this.teamColor) {
+                    break;
+                } else {
+                    possibleMoves.add(new ChessMove(myPosition, possiblePosition));
+                    break;
+                }
+            }
+            // the space is empty so the piece can move there
+            possibleMoves.add(new ChessMove(myPosition, possiblePosition));
+        }
+
+        // diagonal moves
+        // up to the right
+        for (int i = 1; myPosition.getColumn() + i <= ChessBoard.BOARD_COLS
+                && myPosition.getRow() + i <= ChessBoard.BOARD_ROWS; i++) {
+            possiblePosition = new ChessPosition(myPosition.getRow() + i,
+                    myPosition.getColumn() + i);
+            pieceAtLocation = board.getPiece(possiblePosition);
+            // if there is already a piece there
+            if (pieceAtLocation != null) {
+                if (pieceAtLocation.teamColor == this.teamColor) {
+                    break;
+                } else {
+                    possibleMoves.add(new ChessMove(myPosition, possiblePosition));
+                    break;
+                }
+            }
+            // the space is empty so the piece can move there
+            possibleMoves.add(new ChessMove(myPosition, possiblePosition));
+        }
+        // up to the left
+        for (int i = 1; myPosition.getColumn() - i > 0
+                && myPosition.getRow() + i <= ChessBoard.BOARD_ROWS; i++) {
+            possiblePosition = new ChessPosition(myPosition.getRow() + i,
+                    myPosition.getColumn() - i);
+            pieceAtLocation = board.getPiece(possiblePosition);
+            // if there is already a piece there
+            if (pieceAtLocation != null) {
+                if (pieceAtLocation.teamColor == this.teamColor) {
+                    break;
+                } else {
+                    possibleMoves.add(new ChessMove(myPosition, possiblePosition));
+                    break;
+                }
+            }
+            // the space is empty so the piece can move there
+            possibleMoves.add(new ChessMove(myPosition, possiblePosition));
+        }
+        // down to the right
+        for (int i = 1; myPosition.getColumn() + i <= ChessBoard.BOARD_COLS
+                && myPosition.getRow() - i > 0; i++) {
+            possiblePosition = new ChessPosition(myPosition.getRow() - i,
+                    myPosition.getColumn() + i);
+            pieceAtLocation = board.getPiece(possiblePosition);
+            // if there is already a piece there
+            if (pieceAtLocation != null) {
+                if (pieceAtLocation.teamColor == this.teamColor) {
+                    break;
+                } else {
+                    possibleMoves.add(new ChessMove(myPosition, possiblePosition));
+                    break;
+                }
+            }
+            // the space is empty so the piece can move there
+            possibleMoves.add(new ChessMove(myPosition, possiblePosition));
+        }
+        // down to the left
+        for (int i = 1; myPosition.getColumn() - i > 0
+                && myPosition.getRow() - i > 0; i++) {
+            possiblePosition = new ChessPosition(myPosition.getRow() - i,
+                    myPosition.getColumn() - i);
+            pieceAtLocation = board.getPiece(possiblePosition);
+            // if there is already a piece there
+            if (pieceAtLocation != null) {
+                if (pieceAtLocation.teamColor == this.teamColor) {
+                    break;
+                } else {
+                    possibleMoves.add(new ChessMove(myPosition, possiblePosition));
+                    break;
+                }
+            }
+            // the space is empty so the piece can move there
+            possibleMoves.add(new ChessMove(myPosition, possiblePosition));
+        }
+
+        return possibleMoves;
+    }
+
+    private Collection<ChessMove> bishopMoves(ChessBoard board, ChessPosition myPosition) {
+        ChessPosition possiblePosition;
+        ChessPiece pieceAtLocation;
+        Collection<ChessMove> possibleMoves = new ArrayList<>();
+
+        // can move diagonally any amount
+        // up to the right
+        for (int i = 1; myPosition.getColumn() + i <= ChessBoard.BOARD_COLS
+                && myPosition.getRow() + i <= ChessBoard.BOARD_ROWS; i++) {
+            possiblePosition = new ChessPosition(myPosition.getRow() + i,
+                    myPosition.getColumn() + i);
+            pieceAtLocation = board.getPiece(possiblePosition);
+            // if there is already a piece there
+            if (pieceAtLocation != null) {
+                if (pieceAtLocation.teamColor == this.teamColor) {
+                    break;
+                } else {
+                    possibleMoves.add(new ChessMove(myPosition, possiblePosition));
+                    break;
+                }
+            }
+            // the space is empty so the piece can move there
+            possibleMoves.add(new ChessMove(myPosition, possiblePosition));
+        }
+        // up to the left
+        for (int i = 1; myPosition.getColumn() - i > 0
+                && myPosition.getRow() + i <= ChessBoard.BOARD_ROWS; i++) {
+            possiblePosition = new ChessPosition(myPosition.getRow() + i,
+                    myPosition.getColumn() - i);
+            pieceAtLocation = board.getPiece(possiblePosition);
+            // if there is already a piece there
+            if (pieceAtLocation != null) {
+                if (pieceAtLocation.teamColor == this.teamColor) {
+                    break;
+                } else {
+                    possibleMoves.add(new ChessMove(myPosition, possiblePosition));
+                    break;
+                }
+            }
+            // the space is empty so the piece can move there
+            possibleMoves.add(new ChessMove(myPosition, possiblePosition));
+        }
+        // down to the right
+        for (int i = 1; myPosition.getColumn() + i <= ChessBoard.BOARD_COLS
+                && myPosition.getRow() - i > 0; i++) {
+            possiblePosition = new ChessPosition(myPosition.getRow() - i,
+                    myPosition.getColumn() + i);
+            pieceAtLocation = board.getPiece(possiblePosition);
+            // if there is already a piece there
+            if (pieceAtLocation != null) {
+                if (pieceAtLocation.teamColor == this.teamColor) {
+                    break;
+                } else {
+                    possibleMoves.add(new ChessMove(myPosition, possiblePosition));
+                    break;
+                }
+            }
+            // the space is empty so the piece can move there
+            possibleMoves.add(new ChessMove(myPosition, possiblePosition));
+        }
+        // down to the left
+        for (int i = 1; myPosition.getColumn() - i > 0
+                && myPosition.getRow() - i > 0; i++) {
+            possiblePosition = new ChessPosition(myPosition.getRow() - i,
+                    myPosition.getColumn() - i);
+            pieceAtLocation = board.getPiece(possiblePosition);
+            // if there is already a piece there
+            if (pieceAtLocation != null) {
+                if (pieceAtLocation.teamColor == this.teamColor) {
+                    break;
+                } else {
+                    possibleMoves.add(new ChessMove(myPosition, possiblePosition));
+                    break;
+                }
+            }
+            // the space is empty so the piece can move there
+            possibleMoves.add(new ChessMove(myPosition, possiblePosition));
+        }
+
+        return possibleMoves;
+    }
+
+    private Collection<ChessMove> knightMoves(ChessBoard board, ChessPosition myPosition) {
+        ChessPosition possiblePosition;
+        ChessPiece pieceAtLocation;
+        Collection<ChessMove> possibleMoves = new ArrayList<>();
+
+        // can jump forward 2, to the side 1
+        // up right
+        possiblePosition = new ChessPosition(myPosition.getRow() + 2, myPosition.getColumn() + 1);
+        if (isInBounds(possiblePosition)) {
+            pieceAtLocation = board.getPiece(possiblePosition);
+            if (pieceAtLocation == null || pieceAtLocation.teamColor != this.teamColor) {
+                possibleMoves.add(new ChessMove(myPosition, possiblePosition));
+            }
+        }
+
+        // right up
+        possiblePosition = new ChessPosition(myPosition.getRow() + 1, myPosition.getColumn() + 2);
+        if (isInBounds(possiblePosition)) {
+            pieceAtLocation = board.getPiece(possiblePosition);
+            if (pieceAtLocation == null || pieceAtLocation.teamColor != this.teamColor) {
+                possibleMoves.add(new ChessMove(myPosition, possiblePosition));
+            }
+        }
+
+        // right down
+        possiblePosition = new ChessPosition(myPosition.getRow() - 1, myPosition.getColumn() + 2);
+        if (isInBounds(possiblePosition)) {
+            pieceAtLocation = board.getPiece(possiblePosition);
+            if (pieceAtLocation == null || pieceAtLocation.teamColor != this.teamColor) {
+                possibleMoves.add(new ChessMove(myPosition, possiblePosition));
+            }
+        }
+
+        // down right
+        possiblePosition = new ChessPosition(myPosition.getRow() - 2, myPosition.getColumn() + 1);
+        if (isInBounds(possiblePosition)) {
+            pieceAtLocation = board.getPiece(possiblePosition);
+            if (pieceAtLocation == null || pieceAtLocation.teamColor != this.teamColor) {
+                possibleMoves.add(new ChessMove(myPosition, possiblePosition));
+            }
+        }
+
+        // down left
+        possiblePosition = new ChessPosition(myPosition.getRow() - 2, myPosition.getColumn() - 1);
+        if (isInBounds(possiblePosition)) {
+            pieceAtLocation = board.getPiece(possiblePosition);
+            if (pieceAtLocation == null || pieceAtLocation.teamColor != this.teamColor) {
+                possibleMoves.add(new ChessMove(myPosition, possiblePosition));
+            }
+        }
+
+        // left down
+        possiblePosition = new ChessPosition(myPosition.getRow() - 1, myPosition.getColumn() - 2);
+        if (isInBounds(possiblePosition)) {
+            pieceAtLocation = board.getPiece(possiblePosition);
+            if (pieceAtLocation == null || pieceAtLocation.teamColor != this.teamColor) {
+                possibleMoves.add(new ChessMove(myPosition, possiblePosition));
+            }
+        }
+
+        // left up
+        possiblePosition = new ChessPosition(myPosition.getRow() + 1, myPosition.getColumn() - 2);
+        if (isInBounds(possiblePosition)) {
+            pieceAtLocation = board.getPiece(possiblePosition);
+            if (pieceAtLocation == null || pieceAtLocation.teamColor != this.teamColor) {
+                possibleMoves.add(new ChessMove(myPosition, possiblePosition));
+            }
+        }
+
+        // up left
+        possiblePosition = new ChessPosition(myPosition.getRow() + 2, myPosition.getColumn() - 1);
+        if (isInBounds(possiblePosition)) {
+            pieceAtLocation = board.getPiece(possiblePosition);
+            if (pieceAtLocation == null || pieceAtLocation.teamColor != this.teamColor) {
+                possibleMoves.add(new ChessMove(myPosition, possiblePosition));
+            }
+        }
+
+        return possibleMoves;
+    }
+
+    private Collection<ChessMove> rookMoves(ChessBoard board, ChessPosition myPosition) {
+        ChessPosition possiblePosition;
+        ChessPiece pieceAtLocation;
+        Collection<ChessMove> possibleMoves = new ArrayList<>();
+
+        // can move in a straight line any amount
+        // up
+        for (int i = myPosition.getRow() + 1; i <= ChessBoard.BOARD_ROWS; i++) {
+            possiblePosition = new ChessPosition(i, myPosition.getColumn());
+            pieceAtLocation = board.getPiece(possiblePosition);
+            // if there is already a piece there
+            if (pieceAtLocation != null) {
+                if (pieceAtLocation.teamColor == this.teamColor) {
+                    break;
+                } else {
+                    possibleMoves.add(new ChessMove(myPosition, possiblePosition));
+                    break;
+                }
+            }
+            // the space is empty so the piece can move there
+            possibleMoves.add(new ChessMove(myPosition, possiblePosition));
+        }
+        // down
+        for (int i = myPosition.getRow() - 1; i > 0; i--) {
+            possiblePosition = new ChessPosition(i, myPosition.getColumn());
+            pieceAtLocation = board.getPiece(possiblePosition);
+            // if there is already a piece there
+            if (pieceAtLocation != null) {
+                if (pieceAtLocation.teamColor == this.teamColor) {
+                    break;
+                } else {
+                    possibleMoves.add(new ChessMove(myPosition, possiblePosition));
+                    break;
+                }
+            }
+            // the space is empty so the piece can move there
+            possibleMoves.add(new ChessMove(myPosition, possiblePosition));
+        }
+        // left
+        for (int i = myPosition.getColumn() - 1; i > 0; i--) {
+            possiblePosition = new ChessPosition(myPosition.getRow(), i);
+            pieceAtLocation = board.getPiece(possiblePosition);
+            // if there is already a piece there
+            if (pieceAtLocation != null) {
+                if (pieceAtLocation.teamColor == this.teamColor) {
+                    break;
+                } else {
+                    possibleMoves.add(new ChessMove(myPosition, possiblePosition));
+                    break;
+                }
+            }
+            // the space is empty so the piece can move there
+            possibleMoves.add(new ChessMove(myPosition, possiblePosition));
+        }
+        // right
+        for (int i = myPosition.getColumn() + 1; i <= ChessBoard.BOARD_COLS; i++) {
+            possiblePosition = new ChessPosition(myPosition.getRow(), i);
+            pieceAtLocation = board.getPiece(possiblePosition);
+            // if there is already a piece there
+            if (pieceAtLocation != null) {
+                if (pieceAtLocation.teamColor == this.teamColor) {
+                    break;
+                } else {
+                    possibleMoves.add(new ChessMove(myPosition, possiblePosition));
+                    break;
+                }
+            }
+            // the space is empty so the piece can move there
+            possibleMoves.add(new ChessMove(myPosition, possiblePosition));
+        }
+
+        return possibleMoves;
+    }
+
+    private Collection<ChessMove> pawnMoves(ChessBoard board, ChessPosition myPosition) {
+        ChessPosition possiblePosition;
+        ChessPiece pieceAtLocation;
+        Collection<ChessMove> possibleMoves = new ArrayList<>();
+
+        // can move forward 1, or if it has not moved then it can move 2 squares,
+        // attacks on the diagonals, can be promoted as well if it reached the end of
+        // the board
+        boolean canPromote = false;
+        final boolean IS_WHITE = this.teamColor == ChessGame.TeamColor.WHITE;
+        final boolean HAS_MOVED = (IS_WHITE && myPosition.getRow() != 2)
+                || (!IS_WHITE && myPosition.getRow() != ChessBoard.BOARD_ROWS - 1);
+        final int DIRECTION = IS_WHITE ? 1 : -1;
+
+        possiblePosition = new ChessPosition(myPosition.getRow() + 1 * DIRECTION, myPosition.getColumn());
+        if ((this.teamColor == ChessGame.TeamColor.WHITE && possiblePosition.getRow() == ChessBoard.BOARD_ROWS)
+                || (this.teamColor == ChessGame.TeamColor.BLACK && possiblePosition.getRow() == 1)) {
+            // Pawn can be promoted
+            canPromote = true;
+        }
+        pieceAtLocation = board.getPiece(possiblePosition);
+        // if the space in front is empty, it can move there
+        if (pieceAtLocation == null) {
+            if (canPromote) {
+                // add promotion types
+                for (PieceType promotionType : PAWN_PROMOTABLE_PIECE_TYPES) {
+                    possibleMoves.add(new ChessMove(myPosition, possiblePosition, promotionType));
+                }
+            } else {
+                possibleMoves.add(new ChessMove(myPosition, possiblePosition));
+            }
+
+            if (!HAS_MOVED) {
+                // pawn can move double since it hasn't moved yet
+                possiblePosition = new ChessPosition(myPosition.getRow() + 2 * DIRECTION,
+                        myPosition.getColumn());
                 pieceAtLocation = board.getPiece(possiblePosition);
-                // if the space in front is empty, it can move there
                 if (pieceAtLocation == null) {
-                    if (canPromote) {
-                        // add promotion types
-                        for (PieceType promotionType : PAWN_PROMOTABLE_PIECE_TYPES) {
-                            possibleMoves.add(new ChessMove(myPosition, possiblePosition, promotionType));
-                        }
-                    } else {
-                        possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-                    }
-
-                    if (!HAS_MOVED) {
-                        // pawn can move double since it hasn't moved yet
-                        possiblePosition = new ChessPosition(myPosition.getRow() + 2 * DIRECTION,
-                                myPosition.getColumn());
-                        pieceAtLocation = board.getPiece(possiblePosition);
-                        if (pieceAtLocation == null) {
-                            possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-                        }
-                    }
+                    possibleMoves.add(new ChessMove(myPosition, possiblePosition));
                 }
+            }
+        }
 
-                // attacking
-                // right diagonal
-                if (myPosition.getColumn() + 1 < ChessBoard.BOARD_COLS) {
-                    possiblePosition = new ChessPosition(myPosition.getRow() + 1 * DIRECTION,
-                            myPosition.getColumn() + 1);
-                    pieceAtLocation = board.getPiece(possiblePosition);
-                    if (pieceAtLocation != null && pieceAtLocation.teamColor != this.teamColor) {
+        // attacking
+        // right diagonal
+        if (myPosition.getColumn() + 1 < ChessBoard.BOARD_COLS) {
+            possiblePosition = new ChessPosition(myPosition.getRow() + 1 * DIRECTION,
+                    myPosition.getColumn() + 1);
+            pieceAtLocation = board.getPiece(possiblePosition);
+            if (pieceAtLocation != null && pieceAtLocation.teamColor != this.teamColor) {
 
-                        if (canPromote) {
-                            // add promotion types
-                            for (PieceType promotionType : PAWN_PROMOTABLE_PIECE_TYPES) {
-                                possibleMoves.add(new ChessMove(myPosition, possiblePosition, promotionType));
-                            }
-                        } else {
-                            possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-                        }
+                if (canPromote) {
+                    // add promotion types
+                    for (PieceType promotionType : PAWN_PROMOTABLE_PIECE_TYPES) {
+                        possibleMoves.add(new ChessMove(myPosition, possiblePosition, promotionType));
                     }
+                } else {
+                    possibleMoves.add(new ChessMove(myPosition, possiblePosition));
                 }
+            }
+        }
 
-                // left diagonal
-                if (myPosition.getColumn() - 1 > 0) {
-                    possiblePosition = new ChessPosition(myPosition.getRow() + 1 * DIRECTION,
-                            myPosition.getColumn() - 1);
-                    pieceAtLocation = board.getPiece(possiblePosition);
-                    if (pieceAtLocation != null && pieceAtLocation.teamColor != this.teamColor) {
-                        if (canPromote) {
-                            // add promotion types
-                            for (PieceType promotionType : PAWN_PROMOTABLE_PIECE_TYPES) {
-                                possibleMoves.add(new ChessMove(myPosition, possiblePosition, promotionType));
-                            }
-                        } else {
-                            possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-                        }
+        // left diagonal
+        if (myPosition.getColumn() - 1 > 0) {
+            possiblePosition = new ChessPosition(myPosition.getRow() + 1 * DIRECTION,
+                    myPosition.getColumn() - 1);
+            pieceAtLocation = board.getPiece(possiblePosition);
+            if (pieceAtLocation != null && pieceAtLocation.teamColor != this.teamColor) {
+                if (canPromote) {
+                    // add promotion types
+                    for (PieceType promotionType : PAWN_PROMOTABLE_PIECE_TYPES) {
+                        possibleMoves.add(new ChessMove(myPosition, possiblePosition, promotionType));
                     }
+                } else {
+                    possibleMoves.add(new ChessMove(myPosition, possiblePosition));
                 }
-                break;
+            }
         }
 
         return possibleMoves;
