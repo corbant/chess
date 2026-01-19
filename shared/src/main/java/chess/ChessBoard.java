@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.Collection;
 
 import chess.ChessGame.TeamColor;
+import chess.ChessPiece.PieceType;
 
 /**
  * A chessboard that can hold and rearrange chess pieces.
@@ -50,13 +51,15 @@ public class ChessBoard {
      * @return location of the team's king
      */
     public ChessPosition getKingPosition(TeamColor teamColor) {
-        ChessPiece king = new ChessPiece(teamColor, ChessPiece.PieceType.KING);
         ChessPosition position = new ChessPosition(1, 1);
+        ChessPiece piece;
         for (int row = 1; row <= ChessBoard.BOARD_ROWS; row++) {
             for (int col = 1; col <= ChessBoard.BOARD_COLS; col++) {
                 position = new ChessPosition(row, col);
-                if (getPiece(position) == king)
-                    break;
+                piece = getPiece(position);
+                if (piece != null && piece.getPieceType() == PieceType.KING && piece.getTeamColor() == teamColor) {
+                    return position;
+                }
             }
         }
         return position;
@@ -166,5 +169,17 @@ public class ChessBoard {
     @Override
     public String toString() {
         return "ChessBoard [board=" + Arrays.toString(board) + "]";
+    }
+
+    @Override
+    public ChessBoard clone() {
+        ChessBoard copy = new ChessBoard();
+        for (int row = 1; row <= BOARD_ROWS; row++) {
+            for (int col = 1; col <= BOARD_COLS; col++) {
+                ChessPosition position = new ChessPosition(row, col);
+                copy.addPiece(position, this.getPiece(position));
+            }
+        }
+        return copy;
     }
 }
