@@ -44,27 +44,6 @@ public class ChessBoard {
         return board[position.getRow() - 1][position.getColumn() - 1];
     }
 
-    /**
-     * Gets the position of the specified team's king
-     * 
-     * @param teamColor which team's king to search for
-     * @return location of the team's king
-     */
-    public ChessPosition getKingPosition(TeamColor teamColor) {
-        ChessPosition position = new ChessPosition(1, 1);
-        ChessPiece piece;
-        for (int row = 1; row <= ChessBoard.BOARD_ROWS; row++) {
-            for (int col = 1; col <= ChessBoard.BOARD_COLS; col++) {
-                position = new ChessPosition(row, col);
-                piece = getPiece(position);
-                if (piece != null && piece.getPieceType() == PieceType.KING && piece.getTeamColor() == teamColor) {
-                    return position;
-                }
-            }
-        }
-        return position;
-    }
-
     public Collection<ChessPosition> getAllPiecePositions() {
         ArrayList<ChessPosition> piecePositions = new ArrayList<>();
         ChessPosition position;

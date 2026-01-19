@@ -3,6 +3,8 @@ package chess;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import chess.ChessPiece.PieceType;
+
 /**
  * For a class that can manage a chess game, making moves on a board
  * <p>
@@ -100,7 +102,7 @@ public class ChessGame {
     }
 
     private boolean isInCheck(TeamColor teamColor, ChessBoard board) {
-        ChessPosition kingPosition = board.getKingPosition(teamColor);
+        ChessPosition kingPosition = getKingPosition(teamColor, board);
         Collection<ChessMove> allOpponentMoves = getAllTeamMoves(
                 teamColor == TeamColor.WHITE ? TeamColor.BLACK : TeamColor.WHITE, board);
         for (ChessMove move : allOpponentMoves) {
@@ -157,6 +159,27 @@ public class ChessGame {
      */
     public ChessBoard getBoard() {
         return this.board;
+    }
+
+    /**
+     * Gets the position of the specified team's king
+     * 
+     * @param teamColor which team's king to search for
+     * @return location of the team's king
+     */
+    private ChessPosition getKingPosition(TeamColor teamColor, ChessBoard board) {
+        ChessPosition position;
+        ChessPiece piece;
+        for (int row = 1; row <= ChessBoard.BOARD_ROWS; row++) {
+            for (int col = 1; col <= ChessBoard.BOARD_COLS; col++) {
+                position = new ChessPosition(row, col);
+                piece = board.getPiece(position);
+                if (piece != null && piece.getPieceType() == PieceType.KING && piece.getTeamColor() == teamColor) {
+                    return position;
+                }
+            }
+        }
+        return null;
     }
 
     private Collection<ChessMove> getAllTeamMoves(TeamColor teamColor, ChessBoard board) {
