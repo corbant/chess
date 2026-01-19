@@ -1,5 +1,7 @@
 package server;
 
+import com.google.gson.Gson;
+
 import chess.ChessGame.TeamColor;
 import dataaccess.AuthDAO;
 import dataaccess.GameDAO;
@@ -8,6 +10,8 @@ import dataaccess.MemoryAuthDAO;
 import dataaccess.MemoryGameDAO;
 import dataaccess.MemoryUserDAO;
 import io.javalin.*;
+import io.javalin.json.JavalinGson;
+import io.javalin.validation.ValidationException;
 import service.*;
 import service.request.*;
 import service.result.*;
@@ -35,7 +39,11 @@ public class Server {
         gameService = new GameService(gameDAO, authDAO);
         dbService = new DBService(authDAO, userDAO, gameDAO);
 
-        javalin = Javalin.create(config -> config.staticFiles.add("resources/web"));
+        javalin = Javalin.create(config -> {
+            config.staticFiles.add("resources/web");
+            var serializer = new Gson();
+            config.jsonMapper(new JavalinGson(serializer, false));
+        });
 
         // Register your endpoints and exception handlers here.
         javalin.post("/user", ctx -> {
@@ -117,7 +125,7 @@ public class Server {
             ctx.status(401).json(new FailureResponse(error));
         });
 
-        javalin.error(400, ctx -> {
+        javalin.exception(ValidationException.class, (e, ctx) -> {
             String error = String.format(ERROR_MESSAGE_FORMAT, "bad request");
             ctx.status(400).json(new FailureResponse(error));
         });

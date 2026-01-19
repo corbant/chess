@@ -7,7 +7,6 @@ import org.jetbrains.annotations.NotNull;
 import dataaccess.AuthDAO;
 import io.javalin.http.Context;
 import io.javalin.http.Handler;
-import io.javalin.http.UnauthorizedResponse;
 import model.AuthData;
 import service.UnauthorizedException;
 
