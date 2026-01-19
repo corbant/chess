@@ -8,7 +8,6 @@ import dataaccess.MemoryAuthDAO;
 import dataaccess.MemoryGameDAO;
 import dataaccess.MemoryUserDAO;
 import io.javalin.*;
-import io.javalin.http.BadRequestResponse;
 import service.*;
 import service.request.*;
 import service.result.*;
