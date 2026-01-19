@@ -275,12 +275,12 @@ public class ChessPiece {
         // attacks on the diagonals, can be promoted as well if it reached the end of
         // the board
         boolean canPromote = false;
-        final boolean IS_WHITE = this.teamColor == ChessGame.TeamColor.WHITE;
-        final boolean HAS_MOVED = (IS_WHITE && myPosition.getRow() != 2)
-                || (!IS_WHITE && myPosition.getRow() != ChessBoard.BOARD_ROWS - 1);
-        final int DIRECTION = IS_WHITE ? 1 : -1;
+        final boolean isWhite = this.teamColor == ChessGame.TeamColor.WHITE;
+        final boolean hasMoved = (isWhite && myPosition.getRow() != 2)
+                || (!isWhite && myPosition.getRow() != ChessBoard.BOARD_ROWS - 1);
+        final int direction = isWhite ? 1 : -1;
 
-        possiblePosition = new ChessPosition(myPosition.getRow() + 1 * DIRECTION, myPosition.getColumn());
+        possiblePosition = new ChessPosition(myPosition.getRow() + 1 * direction, myPosition.getColumn());
         if ((this.teamColor == ChessGame.TeamColor.WHITE && possiblePosition.getRow() == ChessBoard.BOARD_ROWS)
                 || (this.teamColor == ChessGame.TeamColor.BLACK && possiblePosition.getRow() == 1)) {
             // Pawn can be promoted
@@ -298,9 +298,9 @@ public class ChessPiece {
                 possibleMoves.add(new ChessMove(myPosition, possiblePosition));
             }
 
-            if (!HAS_MOVED) {
+            if (!hasMoved) {
                 // pawn can move double since it hasn't moved yet
-                possiblePosition = new ChessPosition(myPosition.getRow() + 2 * DIRECTION,
+                possiblePosition = new ChessPosition(myPosition.getRow() + 2 * direction,
                         myPosition.getColumn());
                 pieceAtLocation = board.getPiece(possiblePosition);
                 if (pieceAtLocation == null) {
@@ -311,41 +311,33 @@ public class ChessPiece {
 
         // attacking
         // right diagonal
-        if (myPosition.getColumn() + 1 < ChessBoard.BOARD_COLS) {
-            possiblePosition = new ChessPosition(myPosition.getRow() + 1 * DIRECTION,
-                    myPosition.getColumn() + 1);
-            pieceAtLocation = board.getPiece(possiblePosition);
-            if (pieceAtLocation != null && pieceAtLocation.teamColor != this.teamColor) {
-
-                if (canPromote) {
-                    // add promotion types
-                    for (PieceType promotionType : PAWN_PROMOTABLE_PIECE_TYPES) {
-                        possibleMoves.add(new ChessMove(myPosition, possiblePosition, promotionType));
-                    }
-                } else {
-                    possibleMoves.add(new ChessMove(myPosition, possiblePosition));
-                }
-            }
-        }
+        possibleMoves.addAll(pawnAttack(board, myPosition, direction, 1, canPromote));
 
         // left diagonal
-        if (myPosition.getColumn() - 1 > 0) {
-            possiblePosition = new ChessPosition(myPosition.getRow() + 1 * DIRECTION,
-                    myPosition.getColumn() - 1);
-            pieceAtLocation = board.getPiece(possiblePosition);
+        possibleMoves.addAll(pawnAttack(board, myPosition, direction, -1, canPromote));
+
+        return possibleMoves;
+    }
+
+    private Collection<ChessMove> pawnAttack(ChessBoard board,
+            ChessPosition myPosition, int direction, int columnOffset, boolean canPromote) {
+        Collection<ChessMove> moves = new ArrayList<>();
+        if (myPosition.getColumn() + columnOffset > 0
+                && myPosition.getColumn() + columnOffset < ChessBoard.BOARD_COLS) {
+            ChessPosition possiblePosition = new ChessPosition(myPosition.getRow() + direction,
+                    myPosition.getColumn() + columnOffset);
+            ChessPiece pieceAtLocation = board.getPiece(possiblePosition);
             if (pieceAtLocation != null && pieceAtLocation.teamColor != this.teamColor) {
                 if (canPromote) {
-                    // add promotion types
                     for (PieceType promotionType : PAWN_PROMOTABLE_PIECE_TYPES) {
-                        possibleMoves.add(new ChessMove(myPosition, possiblePosition, promotionType));
+                        moves.add(new ChessMove(myPosition, possiblePosition, promotionType));
                     }
                 } else {
-                    possibleMoves.add(new ChessMove(myPosition, possiblePosition));
+                    moves.add(new ChessMove(myPosition, possiblePosition));
                 }
             }
         }
-
-        return possibleMoves;
+        return moves;
     }
 
     private Collection<ChessMove> movesInDirection(ChessBoard board, ChessPosition myPosition, int rowChange,
@@ -408,17 +400,22 @@ public class ChessPiece {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
+        }
         ChessPiece other = (ChessPiece) obj;
-        if (teamColor != other.teamColor)
+        if (teamColor != other.teamColor) {
             return false;
-        if (type != other.type)
+        }
+        if (type != other.type) {
             return false;
+        }
         return true;
     }
 

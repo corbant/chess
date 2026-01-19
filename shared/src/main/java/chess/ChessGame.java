@@ -57,8 +57,9 @@ public class ChessGame {
      */
     public Collection<ChessMove> validMoves(ChessPosition startPosition) {
         ChessPiece piece = board.getPiece(startPosition);
-        if (piece == null)
+        if (piece == null) {
             return null;
+        }
         Collection<ChessMove> possibleMoves = piece.pieceMoves(board, startPosition);
         // remove any moves that put the king in danger
         possibleMoves.removeIf(move -> {
@@ -78,14 +79,16 @@ public class ChessGame {
      */
     public void makeMove(ChessMove move) throws InvalidMoveException {
         ChessPiece piece = board.getPiece(move.getStartPosition());
-        if (piece == null)
+        if (piece == null) {
             throw new InvalidMoveException("No piece at start position");
-        else if (piece.getTeamColor() != this.currentTeamTurn)
+        } else if (piece.getTeamColor() != this.currentTeamTurn) {
             throw new InvalidMoveException("Not your turn");
+        }
 
         Collection<ChessMove> validMoves = this.validMoves(move.getStartPosition());
-        if (!validMoves.contains(move))
+        if (!validMoves.contains(move)) {
             throw new InvalidMoveException("Move is invalid");
+        }
 
         board.movePiece(move);
         this.currentTeamTurn = currentTeamTurn == TeamColor.WHITE ? TeamColor.BLACK : TeamColor.WHITE;
@@ -106,8 +109,9 @@ public class ChessGame {
         Collection<ChessMove> allOpponentMoves = getAllTeamMoves(
                 teamColor == TeamColor.WHITE ? TeamColor.BLACK : TeamColor.WHITE, board);
         for (ChessMove move : allOpponentMoves) {
-            if (move.getEndPosition().equals(kingPosition))
+            if (move.getEndPosition().equals(kingPosition)) {
                 return true;
+            }
         }
         return false;
     }
@@ -213,20 +217,26 @@ public class ChessGame {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
+        }
         ChessGame other = (ChessGame) obj;
-        if (currentTeamTurn != other.currentTeamTurn)
+        if (currentTeamTurn != other.currentTeamTurn) {
             return false;
+        }
         if (board == null) {
-            if (other.board != null)
+            if (other.board != null) {
                 return false;
-        } else if (!board.equals(other.board))
+            }
+        } else if (!board.equals(other.board)) {
             return false;
+        }
         return true;
     }
 }

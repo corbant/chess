@@ -33,19 +33,17 @@ public class Server {
         authDAO = new MemoryAuthDAO();
         userDAO = new MemoryUserDAO();
         gameDAO = new MemoryGameDAO();
-
         // Services
         userService = new UserService(userDAO, authDAO);
         gameService = new GameService(gameDAO, authDAO);
         dbService = new DBService(authDAO, userDAO, gameDAO);
-
+        // web server
         javalin = Javalin.create(config -> {
             config.staticFiles.add("resources/web");
             var serializer = new Gson();
             config.jsonMapper(new JavalinGson(serializer, false));
         });
-
-        // Register your endpoints and exception handlers here.
+        // handlers
         javalin.post("/user", ctx -> {
             RegisterRequest registerRequest = ctx.bodyValidator(RegisterRequest.class)
                     .check(req -> req.username() != null && !req.username().isBlank(), "username required")
@@ -85,8 +83,9 @@ public class Server {
 
         javalin.put("/game", ctx -> {
             GameJoinRequest gameJoinRequest = ctx.bodyValidator(GameJoinRequest.class).check(req -> {
-                if (req.playerColor() == null || req.playerColor().isBlank())
+                if (req.playerColor() == null || req.playerColor().isBlank()) {
                     return false;
+                }
                 try {
                     TeamColor.valueOf(req.playerColor());
                     return true;
@@ -103,7 +102,6 @@ public class Server {
             dbService.clear();
             ctx.status(200);
         });
-
         // exception handlers
         javalin.exception(ServerErrorException.class, (e, ctx) -> {
             String error = String.format(ERROR_MESSAGE_FORMAT, e.getMessage());
