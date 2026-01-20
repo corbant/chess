@@ -112,6 +112,10 @@ public class Server {
             ctx.status(200);
         });
         // exception handlers
+        addExceptionHandlers(javalin);
+    }
+
+    private void addExceptionHandlers(Javalin javalin) {
         javalin.exception(ServerErrorException.class, (e, ctx) -> {
             String error = String.format(ERROR_MESSAGE_FORMAT, e.getMessage());
             ctx.status(500).json(new FailureResponse(error));

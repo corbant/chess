@@ -25,7 +25,7 @@ public class SQLGameDAO extends AbstractSQLDAO implements GameDAO {
                             """
     };
 
-    private final static Gson gson = new Gson();
+    private final static Gson GSON = new Gson();
 
     public SQLGameDAO() {
         super();
@@ -40,7 +40,7 @@ public class SQLGameDAO extends AbstractSQLDAO implements GameDAO {
                 preparedStatement.setString(1, gameData.whiteUsername());
                 preparedStatement.setString(2, gameData.blackUsername());
                 preparedStatement.setString(3, gameData.gameName());
-                preparedStatement.setString(4, gson.toJson(gameData.game()));
+                preparedStatement.setString(4, GSON.toJson(gameData.game()));
 
                 preparedStatement.executeUpdate();
 
@@ -67,7 +67,7 @@ public class SQLGameDAO extends AbstractSQLDAO implements GameDAO {
                 try (var resultSet = preparedStatement.executeQuery()) {
                     if (resultSet.next()) {
                         return new GameData(resultSet.getInt("id"), resultSet.getString("white"),
-                                resultSet.getString("black"), resultSet.getString("name"), gson.fromJson(
+                                resultSet.getString("black"), resultSet.getString("name"), GSON.fromJson(
                                         resultSet.getString("game"), ChessGame.class));
                     }
                 }
@@ -89,7 +89,7 @@ public class SQLGameDAO extends AbstractSQLDAO implements GameDAO {
                 try (var resultSet = preparedStatement.executeQuery()) {
                     while (resultSet.next()) {
                         games.add(new GameData(resultSet.getInt("id"), resultSet.getString("white"),
-                                resultSet.getString("black"), resultSet.getString("name"), gson.fromJson(
+                                resultSet.getString("black"), resultSet.getString("name"), GSON.fromJson(
                                         resultSet.getString("game"), ChessGame.class)));
                     }
                 }
@@ -109,7 +109,7 @@ public class SQLGameDAO extends AbstractSQLDAO implements GameDAO {
                 preparedStatement.setString(1, updatedGameData.whiteUsername());
                 preparedStatement.setString(2, updatedGameData.blackUsername());
                 preparedStatement.setString(3, updatedGameData.gameName());
-                preparedStatement.setString(4, gson.toJson(updatedGameData.game()));
+                preparedStatement.setString(4, GSON.toJson(updatedGameData.game()));
                 preparedStatement.setInt(5, updatedGameData.gameID());
 
                 int updated = preparedStatement.executeUpdate();
