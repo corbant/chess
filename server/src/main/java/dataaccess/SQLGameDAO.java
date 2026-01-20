@@ -3,12 +3,12 @@ package dataaccess;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.Collection;
 
 import com.google.gson.Gson;
 
 import chess.ChessGame;
-import model.AuthData;
 import model.GameData;
 
 public class SQLGameDAO extends AbstractSQLDAO implements GameDAO {
@@ -80,15 +80,43 @@ public class SQLGameDAO extends AbstractSQLDAO implements GameDAO {
     }
 
     @Override
-    public Collection<GameData> listGames() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'listGames'");
+    public Collection<GameData> listGames() throws DataAccessException {
+        Collection<GameData> games = new ArrayList<>();
+        try (Connection conn = DatabaseManager.getConnection()) {
+            try (var preparedStatement = conn
+                    .prepareStatement("SELECT id, white, black, name, game FROM game")) {
+
+                try (var resultSet = preparedStatement.executeQuery()) {
+                    while (resultSet.next()) {
+                        games.add(new GameData(resultSet.getInt("id"), resultSet.getString("white"),
+                                resultSet.getString("black"), resultSet.getString("name"), gson.fromJson(
+                                        resultSet.getString("game"), ChessGame.class)));
+                    }
+                }
+            }
+        } catch (SQLException ex) {
+            throw new DataAccessException(ex.getMessage());
+        }
+
+        return games;
     }
 
     @Override
     public void updateGame(GameData updatedGameData) throws DataAccessException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'updateGame'");
+        try (Connection conn = DatabaseManager.getConnection()) {
+            try (var preparedStatement = conn.prepareStatement(
+                    "UPDATE game SET white=?, black=?, name=?, game=? WHERE id=?")) {
+                preparedStatement.setString(1, updatedGameData.whiteUsername());
+                preparedStatement.setString(2, updatedGameData.blackUsername());
+                preparedStatement.setString(3, updatedGameData.gameName());
+                preparedStatement.setString(4, gson.toJson(updatedGameData.game()));
+                preparedStatement.setInt(5, updatedGameData.gameID());
+
+                preparedStatement.executeUpdate();
+            }
+        } catch (SQLException ex) {
+            throw new DataAccessException(ex.getMessage());
+        }
     }
 
     @Override
