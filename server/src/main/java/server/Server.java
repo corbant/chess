@@ -4,11 +4,13 @@ import com.google.gson.Gson;
 
 import chess.ChessGame.TeamColor;
 import dataaccess.AuthDAO;
+import dataaccess.DataAccessException;
+import dataaccess.DatabaseManager;
 import dataaccess.GameDAO;
 import dataaccess.UserDAO;
-import dataaccess.MemoryAuthDAO;
-import dataaccess.MemoryGameDAO;
-import dataaccess.MemoryUserDAO;
+import dataaccess.SQLAuthDAO;
+import dataaccess.SQLGameDAO;
+import dataaccess.SQLUserDAO;
 import io.javalin.*;
 import io.javalin.json.JavalinGson;
 import io.javalin.validation.ValidationException;
@@ -29,10 +31,17 @@ public class Server {
     private static final String ERROR_MESSAGE_FORMAT = "Error: %s";
 
     public Server() {
+        // Configure DB
+        try {
+            DatabaseManager.createDatabase();
+        } catch (DataAccessException e) {
+            // can't access the db
+            System.exit(-1);
+        }
         // DAOs
-        authDAO = new MemoryAuthDAO();
-        userDAO = new MemoryUserDAO();
-        gameDAO = new MemoryGameDAO();
+        authDAO = new SQLAuthDAO();
+        userDAO = new SQLUserDAO();
+        gameDAO = new SQLGameDAO();
         // Services
         userService = new UserService(userDAO, authDAO);
         gameService = new GameService(gameDAO, authDAO);

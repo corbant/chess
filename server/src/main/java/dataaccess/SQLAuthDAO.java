@@ -10,7 +10,7 @@ public class SQLAuthDAO extends AbstractSQLDAO implements AuthDAO {
     private final static String[] TABLE_CONFIG = {
             """
                     CREATE TABLE IF NOT EXISTS auth (
-                    `token` VARCHAR(32) NOT NULL PRIMARY KEY,
+                    `token` VARCHAR(36) NOT NULL PRIMARY KEY,
                     `username` VARCHAR(256) NOT NULL
                     )
                             """

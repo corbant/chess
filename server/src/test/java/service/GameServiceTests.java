@@ -34,41 +34,58 @@ public class GameServiceTests {
 
     @BeforeEach
     public void reset() {
-        if (gameDAO != null) {
-            gameDAO.clear();
-        }
-        if (authDAO != null) {
-            authDAO.clear();
+        try {
+            if (gameDAO != null) {
+                gameDAO.clear();
+            }
+            if (authDAO != null) {
+                authDAO.clear();
+            }
+        } catch (Exception e) {
+            Assertions.fail(e);
         }
     }
 
     @Test
     public void listGamesSuccess() {
-        GameData[] games = new GameData[] {
-                new GameData(1, "username", "username", "game 1", new ChessGame()),
-                new GameData(2, "username", "username", "game 2", new ChessGame()),
-                new GameData(3, "username", "username", "game 3", new ChessGame())
-        };
-        for (GameData game : games) {
-            gameDAO.createGame(game);
-        }
+        try {
+            int id1 = gameDAO.createGame(new GameData(0, "username", "username", "game 1", new ChessGame()));
+            int id2 = gameDAO.createGame(new GameData(0, "username", "username", "game 2", new ChessGame()));
+            int id3 = gameDAO.createGame(new GameData(0, "username", "username", "game 3", new ChessGame()));
 
-        Assertions.assertArrayEquals(games, gameService.list().games());
+            GameData[] expected = new GameData[] {
+                    new GameData(id1, "username", "username", "game 1", new ChessGame()),
+                    new GameData(id2, "username", "username", "game 2", new ChessGame()),
+                    new GameData(id3, "username", "username", "game 3", new ChessGame())
+            };
+
+            Assertions.assertArrayEquals(expected, gameService.list().games());
+        } catch (Exception e) {
+            Assertions.fail(e);
+        }
     }
 
     @Test
     public void listGamesFailure() {
-        GameData[] games = gameService.list().games();
-        Assertions.assertNotNull(games);
-        Assertions.assertEquals(0, games.length);
+        try {
+            GameData[] games = gameService.list().games();
+            Assertions.assertNotNull(games);
+            Assertions.assertEquals(0, games.length);
+        } catch (Exception e) {
+            Assertions.fail(e);
+        }
     }
 
     @Test
     public void createGameSuccess() {
-        GameCreateRequest req = new GameCreateRequest("game");
-        var res = gameService.create(req);
-        GameData game = gameDAO.getGame(res.gameID());
-        Assertions.assertEquals(req.gameName(), game.gameName());
+        try {
+            GameCreateRequest req = new GameCreateRequest("game");
+            var res = gameService.create(req);
+            GameData game = gameDAO.getGame(res.gameID());
+            Assertions.assertEquals(req.gameName(), game.gameName());
+        } catch (Exception e) {
+            Assertions.fail(e);
+        }
     }
 
     @Test
@@ -78,26 +95,28 @@ public class GameServiceTests {
 
     @Test
     public void joinGameSuccess() {
-        GameData game = new GameData(5, null, null, "test game", new ChessGame());
-        gameDAO.createGame(game);
-        AuthData authSession = new AuthData(UUID.randomUUID().toString(), "testuser");
-        authDAO.createAuth(authSession);
         try {
-            gameService.join(new GameJoinRequest("WHITE", game.gameID()), authSession.authToken());
+            int gameID = gameDAO.createGame(new GameData(0, null, null, "test game", new ChessGame()));
+            AuthData authSession = new AuthData(UUID.randomUUID().toString(), "testuser");
+            authDAO.createAuth(authSession);
+            gameService.join(new GameJoinRequest("WHITE", gameID), authSession.authToken());
         } catch (Exception e) {
-            Assertions.fail();
+            Assertions.fail(e);
         }
     }
 
     @Test
     public void joinGameFailure() {
-        GameData game = new GameData(10, "whiteuser", null, "test game", new ChessGame());
-        gameDAO.createGame(game);
-        AuthData authSession = new AuthData(UUID.randomUUID().toString(), "testuser");
-        authDAO.createAuth(authSession);
-        Assertions.assertThrows(AlreadyTakenException.class, () -> {
-            gameService.join(new GameJoinRequest("WHITE", game.gameID()), authSession.authToken());
-        });
+        try {
+            int gameID = gameDAO.createGame(new GameData(0, "whiteuser", null, "test game", new ChessGame()));
+            AuthData authSession = new AuthData(UUID.randomUUID().toString(), "testuser");
+            authDAO.createAuth(authSession);
+            Assertions.assertThrows(AlreadyTakenException.class, () -> {
+                gameService.join(new GameJoinRequest("WHITE", gameID), authSession.authToken());
+            });
+        } catch (Exception e) {
+            Assertions.fail(e);
+        }
     }
 
 }

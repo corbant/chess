@@ -22,7 +22,6 @@ public class DatabaseTests {
 
     private static Class<?> databaseManagerClass;
 
-
     @BeforeAll
     public static void startServer() {
         server = new Server();
@@ -42,7 +41,6 @@ public class DatabaseTests {
         server.stop();
     }
 
-
     @Test
     @DisplayName("Persistence Test")
     @Order(1)
@@ -52,11 +50,11 @@ public class DatabaseTests {
         TestAuthResult regResult = serverFacade.register(TEST_USER);
         String auth = regResult.getAuthToken();
 
-        //create a game
+        // create a game
         String gameName = "Test Game";
         TestCreateResult createResult = serverFacade.createGame(new TestCreateRequest(gameName), auth);
 
-        //join the game
+        // join the game
         serverFacade.joinPlayer(new TestJoinRequest(ChessGame.TeamColor.WHITE, createResult.getGameID()), auth);
 
         Assertions.assertTrue(initialRowCount < getDatabaseRows(), "No new data added to database");
@@ -65,7 +63,7 @@ public class DatabaseTests {
         stopServer();
         startServer();
 
-        //list games using the auth
+        // list games using the auth
         TestListResult listResult = serverFacade.listGames(auth);
         Assertions.assertEquals(200, serverFacade.getStatusCode(), "Server response code was not 200 OK");
         Assertions.assertEquals(1, listResult.getGames().length, "Missing game(s) in database after restart");
@@ -76,7 +74,7 @@ public class DatabaseTests {
         Assertions.assertEquals(TEST_USER.getUsername(), game1.getWhiteUsername(),
                 "White player username changed after restart");
 
-        //test that we can still log in
+        // test that we can still log in
         serverFacade.login(TEST_USER);
         Assertions.assertEquals(200, serverFacade.getStatusCode(), "Unable to login");
     }
@@ -95,10 +93,14 @@ public class DatabaseTests {
     @Order(3)
     public void databaseErrorHandling() throws ReflectiveOperationException {
         /*
-        This test simulates an interruption in connecting to MySQL after the server is already running (it started with 
-        MySQL working normally). If this happens, this should be considered an "Internal Server Error" and the response 
-        code for any endpoint which no longer can do what it needs to do (which for this project should be all of them) 
-        should be 500. The body of each of these responses should include a reasonable, relevant error message.
+         * This test simulates an interruption in connecting to MySQL after the server
+         * is already running (it started with
+         * MySQL working normally). If this happens, this should be considered an
+         * "Internal Server Error" and the response
+         * code for any endpoint which no longer can do what it needs to do (which for
+         * this project should be all of them)
+         * should be 500. The body of each of these responses should include a
+         * reasonable, relevant error message.
          */
         Properties fakeDbProperties = new Properties();
         fakeDbProperties.setProperty("db.name", UUID.randomUUID().toString());
@@ -118,10 +120,11 @@ public class DatabaseTests {
                 "Register", () -> serverFacade.register(TEST_USER),
                 "Login", () -> serverFacade.login(TEST_USER),
                 "Logout", () -> serverFacade.logout(UUID.randomUUID().toString()),
-                "Create Game", () -> serverFacade.createGame(new TestCreateRequest("inaccessible"), UUID.randomUUID().toString()),
+                "Create Game",
+                () -> serverFacade.createGame(new TestCreateRequest("inaccessible"), UUID.randomUUID().toString()),
                 "List Games", () -> serverFacade.listGames(UUID.randomUUID().toString()),
-                "Join Game", () -> serverFacade.joinPlayer(new TestJoinRequest(ChessGame.TeamColor.WHITE, 1), UUID.randomUUID().toString())
-        );
+                "Join Game", () -> serverFacade.joinPlayer(new TestJoinRequest(ChessGame.TeamColor.WHITE, 1),
+                        UUID.randomUUID().toString()));
 
         try {
             for (Map.Entry<String, Supplier<TestResult>> operationEntry : operations.entrySet()) {
@@ -130,7 +133,8 @@ public class DatabaseTests {
                 TestResult result = operation.get();
                 Assertions.assertEquals(500, serverFacade.getStatusCode(),
                         "Server response code was not 500 Internal Error for " + operationName);
-                Assertions.assertNotNull(result.getMessage(), "Invalid Request didn't return an error message for " + operationName);
+                Assertions.assertNotNull(result.getMessage(),
+                        "Invalid Request didn't return an error message for " + operationName);
                 Assertions.assertTrue(result.getMessage().toLowerCase(Locale.ROOT).contains("error"),
                         "Error message didn't contain the word \"Error\" for " + operationName);
             }
@@ -200,7 +204,7 @@ public class DatabaseTests {
     }
 
     private Class<?> findDatabaseManager() throws ClassNotFoundException {
-        if(databaseManagerClass != null) {
+        if (databaseManagerClass != null) {
             return databaseManagerClass;
         }
 
@@ -210,7 +214,8 @@ public class DatabaseTests {
                 clazz.getDeclaredMethod("getConnection");
                 databaseManagerClass = clazz;
                 return clazz;
-            } catch (ReflectiveOperationException ignored) {}
+            } catch (ReflectiveOperationException ignored) {
+            }
         }
         throw new ClassNotFoundException("Unable to load database in order to verify persistence. " +
                 "Are you using DatabaseManager to set your credentials? " +
