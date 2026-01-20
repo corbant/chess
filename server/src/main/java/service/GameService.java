@@ -30,7 +30,11 @@ public class GameService {
                 throw new DoesNotExistException("Game does not exist");
             }
             TeamColor requestedColor = TeamColor.valueOf(gameJoinRequest.playerColor());
-            String playerUsername = authDAO.getAuth(authToken).username();
+            var authData = authDAO.getAuth(authToken);
+            if (authData == null) {
+                throw new ServerErrorException("Invalid auth token");
+            }
+            String playerUsername = authData.username();
             GameData updatedGameData;
             if (requestedColor == TeamColor.WHITE) {
                 if (gameData.whiteUsername() != null) {
