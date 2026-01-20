@@ -1,5 +1,8 @@
 package dataaccess;
 
+import java.sql.Connection;
+import java.sql.SQLException;
+
 import model.UserData;
 
 public class SQLUserDAO extends AbstractSQLDAO implements UserDAO {
@@ -19,9 +22,19 @@ public class SQLUserDAO extends AbstractSQLDAO implements UserDAO {
     }
 
     @Override
-    public void createUser(UserData user) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'createUser'");
+    public void createUser(UserData user) throws DataAccessException {
+        try (Connection conn = DatabaseManager.getConnection()) {
+            try (var preparedStatement = conn
+                    .prepareStatement("INSERT INTO user (username, password, email) VALUES(?, ?, ?)")) {
+                preparedStatement.setString(1, user.username());
+                preparedStatement.setString(2, user.password());
+                preparedStatement.setString(3, user.email());
+
+                preparedStatement.executeUpdate();
+            }
+        } catch (SQLException ex) {
+            throw new DataAccessException(ex.getMessage());
+        }
     }
 
     @Override
