@@ -38,9 +38,24 @@ public class SQLUserDAO extends AbstractSQLDAO implements UserDAO {
     }
 
     @Override
-    public UserData getUser(String username) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getUser'");
+    public UserData getUser(String username) throws DataAccessException {
+        try (Connection conn = DatabaseManager.getConnection()) {
+            try (var preparedStatement = conn
+                    .prepareStatement("SELECT username, password, email FROM user WHERE username=?")) {
+                preparedStatement.setString(1, username);
+
+                try (var resultSet = preparedStatement.executeQuery()) {
+                    if (resultSet.next()) {
+                        return new UserData(resultSet.getString("username"), resultSet.getString("password"),
+                                resultSet.getString("email"));
+                    }
+                }
+            }
+        } catch (SQLException ex) {
+            throw new DataAccessException(ex.getMessage());
+        }
+
+        return null;
     }
 
     @Override

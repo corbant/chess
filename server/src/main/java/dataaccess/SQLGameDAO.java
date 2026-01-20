@@ -7,6 +7,8 @@ import java.util.Collection;
 
 import com.google.gson.Gson;
 
+import chess.ChessGame;
+import model.AuthData;
 import model.GameData;
 
 public class SQLGameDAO extends AbstractSQLDAO implements GameDAO {
@@ -56,9 +58,25 @@ public class SQLGameDAO extends AbstractSQLDAO implements GameDAO {
     }
 
     @Override
-    public GameData getGame(int gameID) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getGame'");
+    public GameData getGame(int gameID) throws DataAccessException {
+        try (Connection conn = DatabaseManager.getConnection()) {
+            try (var preparedStatement = conn
+                    .prepareStatement("SELECT id, white, black, name, game FROM game WHERE id=?")) {
+                preparedStatement.setInt(1, gameID);
+
+                try (var resultSet = preparedStatement.executeQuery()) {
+                    if (resultSet.next()) {
+                        return new GameData(resultSet.getInt("id"), resultSet.getString("white"),
+                                resultSet.getString("black"), resultSet.getString("name"), gson.fromJson(
+                                        resultSet.getString("game"), ChessGame.class));
+                    }
+                }
+            }
+        } catch (SQLException ex) {
+            throw new DataAccessException(ex.getMessage());
+        }
+
+        return null;
     }
 
     @Override
