@@ -4,6 +4,19 @@ import model.AuthData;
 
 public class SQLAuthDAO implements AuthDAO {
 
+    private final static String[] TABLE_CONFIG = {
+            """
+                    CREATE TABLE IF NOT EXISTS auth (
+                    `token` VARCHAR(32) NOT NULL,
+                    `username` VARCHAR(256) NOT NULL
+                    )
+                            """
+    };
+
+    public SQLAuthDAO() {
+        configureTable();
+    }
+
     @Override
     public void createAuth(AuthData authData) {
         // TODO Auto-generated method stub
@@ -28,4 +41,7 @@ public class SQLAuthDAO implements AuthDAO {
         throw new UnsupportedOperationException("Unimplemented method 'clear'");
     }
 
+    private void configureTable() {
+
+    }
 }

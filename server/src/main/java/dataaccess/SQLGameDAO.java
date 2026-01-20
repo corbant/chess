@@ -6,6 +6,23 @@ import model.GameData;
 
 public class SQLGameDAO implements GameDAO {
 
+    private final static String[] TABLE_CONFIG = {
+            """
+                    CREATE TABLE IF NOT EXISTS game (
+                    `id` INT AUTO_INCREMENT PRIMARY KEY,
+                    `white` VARCHAR(256) DEFAULT NULL,
+                    `black` VARCHAR(256) DEFAULT NULL,
+                    `name` VARCHAR(256) NOT NULL,
+                    `game` TEXT NOT NULL
+                    )
+                    AUTO_INCREMENT = 1
+                            """
+    };
+
+    public SQLGameDAO() {
+        configureTable();
+    }
+
     @Override
     public void createGame(GameData gameData) {
         // TODO Auto-generated method stub
@@ -34,6 +51,10 @@ public class SQLGameDAO implements GameDAO {
     public void clear() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'clear'");
+    }
+
+    private void configureTable() {
+
     }
 
 }
