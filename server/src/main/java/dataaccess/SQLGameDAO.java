@@ -5,6 +5,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Collection;
 
+import com.google.gson.Gson;
+
 import model.GameData;
 
 public class SQLGameDAO extends AbstractSQLDAO implements GameDAO {
@@ -21,13 +23,36 @@ public class SQLGameDAO extends AbstractSQLDAO implements GameDAO {
                             """
     };
 
+    private final static Gson gson = new Gson();
+
     public SQLGameDAO() {
         super();
     }
 
     @Override
-    public int createGame(GameData gameData) {
+    public int createGame(GameData gameData) throws DataAccessException {
+        try (Connection conn = DatabaseManager.getConnection()) {
+            try (var preparedStatement = conn.prepareStatement(
+                    "INSERT INTO game (white, black, name, game) VALUES(?, ?, ?, ?)",
+                    Statement.RETURN_GENERATED_KEYS)) {
+                preparedStatement.setString(1, gameData.whiteUsername());
+                preparedStatement.setString(2, gameData.blackUsername());
+                preparedStatement.setString(3, gameData.gameName());
+                preparedStatement.setString(4, gson.toJson(gameData.game()));
 
+                preparedStatement.executeUpdate();
+
+                var resultSet = preparedStatement.getGeneratedKeys();
+                int id = 0;
+                if (resultSet.next()) {
+                    id = resultSet.getInt(1);
+                }
+
+                return id;
+            }
+        } catch (SQLException ex) {
+            throw new DataAccessException(ex.getMessage());
+        }
     }
 
     @Override

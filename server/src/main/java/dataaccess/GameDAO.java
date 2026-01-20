@@ -6,11 +6,11 @@ import model.GameData;
 
 public interface GameDAO {
 
-    int createGame(GameData gameData);
+    int createGame(GameData gameData) throws DataAccessException;
 
-    GameData getGame(int gameID);
+    GameData getGame(int gameID) throws DataAccessException;
 
-    Collection<GameData> listGames();
+    Collection<GameData> listGames() throws DataAccessException;
 
     void updateGame(GameData updatedGameData) throws DataAccessException;
 
