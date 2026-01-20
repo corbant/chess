@@ -6,8 +6,8 @@ import org.junit.jupiter.api.Test;
 public class UserDAOTests {
 
     @BeforeAll
-    public void setup() {
-
+    public void setup() throws DataAccessException {
+        DatabaseManager.createDatabase();
     }
 
     @Test

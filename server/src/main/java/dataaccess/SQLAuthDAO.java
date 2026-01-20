@@ -59,7 +59,10 @@ public class SQLAuthDAO extends AbstractSQLDAO implements AuthDAO {
             try (var preparedStatement = conn.prepareStatement("DELETE FROM auth WHERE token=?")) {
                 preparedStatement.setString(1, authToken);
 
-                preparedStatement.executeUpdate();
+                int deleted = preparedStatement.executeUpdate();
+                if (deleted == 0) {
+                    throw new DataAccessException("Auth not found");
+                }
             }
         } catch (SQLException ex) {
             throw new DataAccessException(ex.getMessage());

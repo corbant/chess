@@ -6,8 +6,8 @@ import org.junit.jupiter.api.Test;
 public class GameDAOTests {
 
     @BeforeAll
-    public void setup() {
-
+    public static void setup() throws DataAccessException {
+        DatabaseManager.createDatabase();
     }
 
     @Test
