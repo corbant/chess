@@ -112,7 +112,10 @@ public class SQLGameDAO extends AbstractSQLDAO implements GameDAO {
                 preparedStatement.setString(4, gson.toJson(updatedGameData.game()));
                 preparedStatement.setInt(5, updatedGameData.gameID());
 
-                preparedStatement.executeUpdate();
+                int updated = preparedStatement.executeUpdate();
+                if (updated == 0) {
+                    throw new DataAccessException("Game not found");
+                }
             }
         } catch (SQLException ex) {
             throw new DataAccessException(ex.getMessage());
