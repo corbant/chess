@@ -16,7 +16,6 @@ import service.result.GameListResponse;
 public class GameService {
     private GameDAO gameDAO;
     private AuthDAO authDAO;
-    private int nextGameID = 1;
 
     public GameService(GameDAO gameDAO, AuthDAO authDAO) {
         this.gameDAO = gameDAO;
@@ -54,9 +53,9 @@ public class GameService {
     }
 
     public GameCreateResponse create(GameCreateRequest gameCreateRequest) {
-        GameData gameData = new GameData(nextGameID++, null, null, gameCreateRequest.gameName(), new ChessGame());
-        gameDAO.createGame(gameData);
-        return new GameCreateResponse(gameData.gameID());
+        GameData gameData = new GameData(0, null, null, gameCreateRequest.gameName(), new ChessGame());
+        int gameID = gameDAO.createGame(gameData);
+        return new GameCreateResponse(gameID);
     }
 
     public GameListResponse list() {

@@ -1,26 +1,37 @@
 package dataaccess;
 
+import java.sql.Connection;
+import java.sql.SQLException;
+
 import model.AuthData;
 
-public class SQLAuthDAO implements AuthDAO {
+public class SQLAuthDAO extends AbstractSQLDAO implements AuthDAO {
 
     private final static String[] TABLE_CONFIG = {
             """
                     CREATE TABLE IF NOT EXISTS auth (
-                    `token` VARCHAR(32) NOT NULL,
+                    `token` VARCHAR(32) NOT NULL PRIMARY KEY,
                     `username` VARCHAR(256) NOT NULL
                     )
                             """
     };
 
     public SQLAuthDAO() {
-        configureTable();
+        super();
     }
 
     @Override
-    public void createAuth(AuthData authData) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'createAuth'");
+    public void createAuth(AuthData authData) throws DataAccessException {
+        try (Connection conn = DatabaseManager.getConnection()) {
+            try (var preparedStatement = conn.prepareStatement("INSERT INTO auth (token, username) VALUES(?, ?)")) {
+                preparedStatement.setString(1, authData.authToken());
+                preparedStatement.setString(2, authData.username());
+
+                preparedStatement.executeUpdate();
+            }
+        } catch (SQLException ex) {
+            throw new DataAccessException(ex.getMessage());
+        }
     }
 
     @Override
@@ -41,7 +52,8 @@ public class SQLAuthDAO implements AuthDAO {
         throw new UnsupportedOperationException("Unimplemented method 'clear'");
     }
 
-    private void configureTable() {
-
+    @Override
+    protected String[] getTableConfig() {
+        return TABLE_CONFIG;
     }
 }

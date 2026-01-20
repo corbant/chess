@@ -2,12 +2,12 @@ package dataaccess;
 
 import model.UserData;
 
-public class SQLUserDAO implements UserDAO {
+public class SQLUserDAO extends AbstractSQLDAO implements UserDAO {
 
     private final static String[] TABLE_CONFIG = {
             """
                     CREATE TABLE IF NOT EXISTS user (
-                    `username` VARCHAR(256) NOT NULL,
+                    `username` VARCHAR(256) NOT NULL PRIMARY KEY,
                     `password` VARCHAR(256) NOT NULL,
                     `email` VARCHAR(256) NOT NULL
                     )
@@ -15,7 +15,7 @@ public class SQLUserDAO implements UserDAO {
     };
 
     public SQLUserDAO() {
-        configureTable();
+        super();
     }
 
     @Override
@@ -36,8 +36,8 @@ public class SQLUserDAO implements UserDAO {
         throw new UnsupportedOperationException("Unimplemented method 'clear'");
     }
 
-    private void configureTable() {
-
+    @Override
+    protected String[] getTableConfig() {
+        return TABLE_CONFIG;
     }
-
 }

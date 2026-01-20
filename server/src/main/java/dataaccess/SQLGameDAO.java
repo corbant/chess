@@ -1,10 +1,13 @@
 package dataaccess;
 
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Collection;
 
 import model.GameData;
 
-public class SQLGameDAO implements GameDAO {
+public class SQLGameDAO extends AbstractSQLDAO implements GameDAO {
 
     private final static String[] TABLE_CONFIG = {
             """
@@ -15,18 +18,16 @@ public class SQLGameDAO implements GameDAO {
                     `name` VARCHAR(256) NOT NULL,
                     `game` TEXT NOT NULL
                     )
-                    AUTO_INCREMENT = 1
                             """
     };
 
     public SQLGameDAO() {
-        configureTable();
+        super();
     }
 
     @Override
-    public void createGame(GameData gameData) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'createGame'");
+    public int createGame(GameData gameData) {
+
     }
 
     @Override
@@ -53,8 +54,9 @@ public class SQLGameDAO implements GameDAO {
         throw new UnsupportedOperationException("Unimplemented method 'clear'");
     }
 
-    private void configureTable() {
-
+    @Override
+    protected String[] getTableConfig() {
+        return TABLE_CONFIG;
     }
 
 }

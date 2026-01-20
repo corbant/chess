@@ -6,7 +6,7 @@ import model.GameData;
 
 public interface GameDAO {
 
-    void createGame(GameData gameData);
+    int createGame(GameData gameData);
 
     GameData getGame(int gameID);
 

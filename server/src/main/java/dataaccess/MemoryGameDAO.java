@@ -7,14 +7,18 @@ import model.GameData;
 
 public class MemoryGameDAO implements GameDAO {
     private ArrayList<GameData> games;
+    private int nextGameID;
 
     public MemoryGameDAO() {
         games = new ArrayList<>();
+        nextGameID = 1;
     }
 
     @Override
-    public void createGame(GameData gameData) {
-        games.add(gameData);
+    public int createGame(GameData gameData) {
+        games.add(new GameData(nextGameID, gameData.whiteUsername(), gameData.blackUsername(), gameData.gameName(),
+                gameData.game()));
+        return nextGameID++;
     }
 
     @Override
