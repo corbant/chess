@@ -21,49 +21,61 @@ public class UserService {
         this.authDAO = authDAO;
     }
 
-    public RegisterResult register(RegisterRequest registerRequest) throws AlreadyTakenException {
-        UserData existingUser = userDAO.getUser(registerRequest.username());
-        if (existingUser != null) {
-            throw new AlreadyTakenException("Username already taken");
-        }
-        String hashedPassword = BCrypt.hashpw(registerRequest.password(), BCrypt.gensalt());
-        UserData newUser = new UserData(registerRequest.username(), hashedPassword, registerRequest.email());
-        userDAO.createUser(newUser);
+    public RegisterResult register(RegisterRequest registerRequest) throws AlreadyTakenException, ServerErrorException {
+        try {
+            UserData existingUser = userDAO.getUser(registerRequest.username());
+            if (existingUser != null) {
+                throw new AlreadyTakenException("Username already taken");
+            }
+            String hashedPassword = BCrypt.hashpw(registerRequest.password(), BCrypt.gensalt());
+            UserData newUser = new UserData(registerRequest.username(), hashedPassword, registerRequest.email());
+            userDAO.createUser(newUser);
 
-        AuthData authSession = createAuthSession(newUser.username());
-        return new RegisterResult(authSession.username(), authSession.authToken());
+            AuthData authSession = createAuthSession(newUser.username());
+            return new RegisterResult(authSession.username(), authSession.authToken());
+        } catch (DataAccessException ex) {
+            throw new ServerErrorException(ex.getMessage());
+        }
     }
 
-    public LoginResult login(LoginRequest loginRequest) throws UnauthorizedException {
-        UserData user = userDAO.getUser(loginRequest.username());
-        if (user == null) {
-            throw new UnauthorizedException("Unauthorized");
-        }
-        boolean validPassword = BCrypt.checkpw(loginRequest.password(), user.password());
-        if (!validPassword) {
-            throw new UnauthorizedException("Unauthorized");
-        }
+    public LoginResult login(LoginRequest loginRequest) throws UnauthorizedException, ServerErrorException {
+        try {
+            UserData user = userDAO.getUser(loginRequest.username());
+            if (user == null) {
+                throw new UnauthorizedException("Unauthorized");
+            }
+            boolean validPassword = BCrypt.checkpw(loginRequest.password(), user.password());
+            if (!validPassword) {
+                throw new UnauthorizedException("Unauthorized");
+            }
 
-        AuthData authSession = createAuthSession(user.username());
-        return new LoginResult(authSession.username(), authSession.authToken());
+            AuthData authSession = createAuthSession(user.username());
+            return new LoginResult(authSession.username(), authSession.authToken());
+        } catch (DataAccessException ex) {
+            throw new ServerErrorException(ex.getMessage());
+        }
     }
 
     public void logout(String authToken) throws UnauthorizedException, ServerErrorException {
-        AuthData authSession = authDAO.getAuth(authToken);
-        if (authSession == null) {
-            throw new UnauthorizedException("Unauthorized");
-        }
         try {
+            AuthData authSession = authDAO.getAuth(authToken);
+            if (authSession == null) {
+                throw new UnauthorizedException("Unauthorized");
+            }
             authDAO.deleteAuth(authSession.authToken());
         } catch (DataAccessException e) {
             throw new ServerErrorException(e.getMessage());
         }
     }
 
-    private AuthData createAuthSession(String username) {
-        String authToken = UUID.randomUUID().toString();
-        AuthData authSession = new AuthData(authToken, username);
-        authDAO.createAuth(authSession);
-        return new AuthData(authToken, username);
+    private AuthData createAuthSession(String username) throws ServerErrorException {
+        try {
+            String authToken = UUID.randomUUID().toString();
+            AuthData authSession = new AuthData(authToken, username);
+            authDAO.createAuth(authSession);
+            return new AuthData(authToken, username);
+        } catch (DataAccessException ex) {
+            throw new ServerErrorException(ex.getMessage());
+        }
     }
 }

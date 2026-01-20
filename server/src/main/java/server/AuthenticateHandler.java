@@ -5,9 +5,11 @@ import java.util.UUID;
 import org.jetbrains.annotations.NotNull;
 
 import dataaccess.AuthDAO;
+import dataaccess.DataAccessException;
 import io.javalin.http.Context;
 import io.javalin.http.Handler;
 import model.AuthData;
+import service.ServerErrorException;
 import service.UnauthorizedException;
 
 public class AuthenticateHandler implements Handler {
@@ -23,11 +25,15 @@ public class AuthenticateHandler implements Handler {
         try {
             UUID.fromString(authToken);
         } catch (IllegalArgumentException e) {
-            throw new UnauthorizedException(null);
+            throw new UnauthorizedException("Unauthorized");
         }
-        AuthData authSession = authDAO.getAuth(authToken);
-        if (authSession == null) {
-            throw new UnauthorizedException(null);
+        try {
+            AuthData authSession = authDAO.getAuth(authToken);
+            if (authSession == null) {
+                throw new UnauthorizedException("Unauthorized");
+            }
+        } catch (DataAccessException e) {
+            throw new ServerErrorException(e.getMessage());
         }
     }
 

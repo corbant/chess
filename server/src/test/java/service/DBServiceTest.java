@@ -33,19 +33,23 @@ public class DBServiceTest {
 
     @Test
     public void clear() {
-        UserData user = new UserData("username", "password", "email");
-        userDAO.createUser(user);
+        try {
+            UserData user = new UserData("username", "password", "email");
+            userDAO.createUser(user);
 
-        AuthData auth = new AuthData(UUID.randomUUID().toString(), "username");
-        authDAO.createAuth(auth);
+            AuthData auth = new AuthData(UUID.randomUUID().toString(), "username");
+            authDAO.createAuth(auth);
 
-        GameData game = new GameData(1, "username", "username", "game name", new ChessGame());
-        gameDAO.createGame(game);
+            GameData game = new GameData(1, "username", "username", "game name", new ChessGame());
+            gameDAO.createGame(game);
 
-        dbService.clear();
+            dbService.clear();
 
-        Assertions.assertNull(userDAO.getUser(user.username()));
-        Assertions.assertNull(authDAO.getAuth(auth.authToken()));
-        Assertions.assertNull(gameDAO.getGame(game.gameID()));
+            Assertions.assertNull(userDAO.getUser(user.username()));
+            Assertions.assertNull(authDAO.getAuth(auth.authToken()));
+            Assertions.assertNull(gameDAO.getGame(game.gameID()));
+        } catch (Exception e) {
+            Assertions.fail(e);
+        }
     }
 }

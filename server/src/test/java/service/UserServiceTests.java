@@ -32,11 +32,15 @@ public class UserServiceTests {
 
     @BeforeEach
     public void reset() {
-        if (userDAO != null) {
-            userDAO.clear();
-        }
-        if (authDAO != null) {
-            authDAO.clear();
+        try {
+            if (userDAO != null) {
+                userDAO.clear();
+            }
+            if (authDAO != null) {
+                authDAO.clear();
+            }
+        } catch (Exception e) {
+            Assertions.fail(e);
         }
     }
 
@@ -51,16 +55,20 @@ public class UserServiceTests {
 
     @Test
     public void registerFailure() {
-        userDAO.createUser(new UserData("username", "password", "user@test.com"));
-        Assertions.assertThrows(AlreadyTakenException.class, () -> {
-            userService.register(new RegisterRequest("username", "password", "user@test.com"));
-        });
+        try {
+            userDAO.createUser(new UserData("username", "password", "user@test.com"));
+            Assertions.assertThrows(AlreadyTakenException.class, () -> {
+                userService.register(new RegisterRequest("username", "password", "user@test.com"));
+            });
+        } catch (Exception e) {
+            Assertions.fail(e);
+        }
     }
 
     @Test
     public void loginSuccess() {
-        userDAO.createUser(new UserData("username", BCrypt.hashpw("password", BCrypt.gensalt()), "user@test.com"));
         try {
+            userDAO.createUser(new UserData("username", BCrypt.hashpw("password", BCrypt.gensalt()), "user@test.com"));
             userService.login(new LoginRequest("username", "password"));
         } catch (Exception e) {
             Assertions.fail(e);
@@ -76,9 +84,9 @@ public class UserServiceTests {
 
     @Test
     public void logoutSuccess() {
-        AuthData authSession = new AuthData(UUID.randomUUID().toString(), "username");
-        authDAO.createAuth(authSession);
         try {
+            AuthData authSession = new AuthData(UUID.randomUUID().toString(), "username");
+            authDAO.createAuth(authSession);
             userService.logout(authSession.authToken());
         } catch (Exception e) {
             Assertions.fail(e);
