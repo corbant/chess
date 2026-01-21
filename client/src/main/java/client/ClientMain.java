@@ -13,7 +13,7 @@ public class ClientMain {
         // new Repl(serverUrl).run();
         var game = new ChessGame();
         var boardDrawer = new ChessBoardDrawer(System.out);
-        System.out.println("♕ 240 Chess Client:");
+        System.out.println("♕  Welcome to 240 Chess. Type help to get started. ♕");
         boardDrawer.draw(game.getBoard());
     }
 }
