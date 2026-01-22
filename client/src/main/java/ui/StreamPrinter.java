@@ -2,15 +2,19 @@ package ui;
 
 import java.io.PrintStream;
 
-public class StreamDrawer {
+public class StreamPrinter {
 
     protected PrintStream out;
 
-    public StreamDrawer(PrintStream output) {
+    public StreamPrinter(PrintStream output) {
         this.out = output;
     }
 
-    protected void setTextColor(Color color) {
+    public void print(String text) {
+        out.print(text);
+    }
+
+    public void setTextColor(Color color) {
         switch (color) {
             case BLACK:
                 out.print(EscapeSequences.SET_TEXT_COLOR_BLACK);
@@ -45,7 +49,7 @@ public class StreamDrawer {
         }
     }
 
-    protected void setBackgroundColor(Color color) {
+    public void setBackgroundColor(Color color) {
         switch (color) {
             case BLACK:
                 out.print(EscapeSequences.SET_BG_COLOR_BLACK);
@@ -80,7 +84,7 @@ public class StreamDrawer {
         }
     }
 
-    protected void setTextEffect(TextEffect effect) {
+    public void setTextEffect(TextEffect effect) {
         switch (effect) {
             case BOLD:
                 out.print(EscapeSequences.SET_TEXT_BOLD);
@@ -106,11 +110,11 @@ public class StreamDrawer {
         }
     }
 
-    protected void eraseScreen() {
+    public void eraseScreen() {
         out.print(EscapeSequences.ERASE_SCREEN);
     }
 
-    protected void eraseLine() {
+    public void eraseLine() {
         out.print(EscapeSequences.ERASE_LINE);
     }
 }

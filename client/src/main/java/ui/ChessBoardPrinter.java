@@ -8,10 +8,10 @@ import chess.ChessPosition;
 import chess.ChessGame.TeamColor;
 import chess.ChessPiece.PieceType;
 
-public class ChessBoardDrawer extends StreamDrawer {
+public class ChessBoardPrinter extends StreamPrinter {
 
     // TODO: add customization options
-    public ChessBoardDrawer(PrintStream output) {
+    public ChessBoardPrinter(PrintStream output) {
         super(output);
     }
 

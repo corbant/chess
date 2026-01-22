@@ -14,6 +14,7 @@ public class ServerFacade {
     private final String BASE_URL;
     private final HttpClient client;
     private final static String AUTH_HEADER_NAME = "authorization";
+    private String authToken;
 
     public ServerFacade(int hostname, int port) {
         this.BASE_URL = String.format("http://%s:%d", hostname, port);
@@ -27,7 +28,7 @@ public class ServerFacade {
     }
 
     public void logout() {
-        var response = delete("/session");
+        var response = delete("/session", authToken);
     }
 
     public void register(String username, String password, String email) {
@@ -40,21 +41,29 @@ public class ServerFacade {
     public void createGame(String gameName) {
         var body = Map.ofEntries(Map.entry("gameName", gameName));
         var jsonBody = new Gson().toJson(body);
-        var response = post("/game", jsonBody);
+        var response = post("/game", authToken, jsonBody);
     }
 
     public void listGames() {
-        var response = get("/game");
+        var response = get("/game", authToken);
     }
 
     public void playGame(int gameID, String playerColor) {
         var body = Map.ofEntries(Map.entry("gameID", gameID), Map.entry("playerColor", playerColor));
         var jsonBody = new Gson().toJson(body);
-        var response = put("/game", jsonBody);
+        var response = put("/game", authToken, jsonBody);
     }
 
     public void observeGame(int gameID) {
 
+    }
+
+    public void setAuthToken(String authToken) {
+        this.authToken = authToken;
+    }
+
+    public void clearAuthToken() {
+        this.authToken = null;
     }
 
     private URI getUri(String path) {
@@ -105,8 +114,7 @@ public class ServerFacade {
     }
 
     private HttpResponse<String> delete(String path) {
-        HttpRequest request = HttpRequest.newBuilder(getUri(path)).DELETE().build();
-        return client.send(request, BodyHandlers.ofString());
+        return delete(path, null);
     }
 
     private HttpResponse<String> delete(String path, String authToken) {
