@@ -18,6 +18,10 @@ public class StreamPrinter {
         out.print(text + '\n');
     }
 
+    public void newline() {
+        out.print('\n');
+    }
+
     public void setTextColor(Color color) {
         switch (color) {
             case BLACK:

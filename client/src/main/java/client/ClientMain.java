@@ -1,6 +1,5 @@
 package client;
 
-import java.util.List;
 import java.util.Scanner;
 
 import ui.ChessBoardPrinter;
@@ -34,9 +33,9 @@ public class ClientMain {
     public static void printPrompt(boolean isLoggedIn) {
         printer.print("[");
         if (isLoggedIn) {
-            printer.print("LOGGED_IN");
+            printer.print("LOGGED IN");
         } else {
-            printer.print("LOGGED_OUT");
+            printer.print("LOGGED OUT");
         }
         printer.print("] >>> ");
     }

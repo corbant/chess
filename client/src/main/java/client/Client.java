@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
+import chess.ChessGame;
 import chess.ChessGame.TeamColor;
 import ui.ChessBoardPrinter;
 import ui.Color;
@@ -62,6 +63,7 @@ public class Client {
                         logout();
                     }),
                     new Command("quit", "playing chess", null, (commandArgs) -> {
+                        logout();
                         printer.println("Bye!");
                         System.exit(0);
                     }),
@@ -93,7 +95,7 @@ public class Client {
         }
         authToken = response.authToken();
         isLoggedIn = true;
-        printer.print("Logged in as " + response.username());
+        printer.println("Logged in as " + response.username());
     }
 
     private void login(String username, String password) {
@@ -115,7 +117,7 @@ public class Client {
         }
         authToken = response.authToken();
         isLoggedIn = true;
-        printer.print("Logged in as " + response.username());
+        printer.println("Logged in as " + response.username());
     }
 
     private void createGame(String name) {
@@ -135,7 +137,7 @@ public class Client {
             printErrorMessage("Unable to connect to server, please try again");
             return;
         }
-        printer.print("New game created with game ID " + response.gameID());
+        printer.println("New game created with game ID " + response.gameID());
     }
 
     private void listGames() {
@@ -155,16 +157,31 @@ public class Client {
         printer.println("Games:");
         for (var game : response.games()) {
             printer.setTextColor(Color.BLUE);
-            printer.print("" + game.gameID());
+            printer.print("[" + game.gameID() + "] ");
             printer.setTextColor(Color.NONE);
-            printer.print(" - ");
-            printer.setTextColor(Color.MAGENTA);
             printer.print(game.gameName());
             printer.setTextColor(Color.NONE);
-            printer.print(" | ");
-            printer.setTextColor(Color.YELLOW);
-            printer.print("White: " + game.whiteUsername() != null ? game.whiteUsername() : "AVAILABLE");
-            printer.println(" Black: " + game.blackUsername() != null ? game.blackUsername() : "AVAILABLE");
+            printer.print(" - ");
+            printer.setTextColor(Color.WHITE);
+            printer.print("white: ");
+            if (game.whiteUsername() != null) {
+                printer.print(game.whiteUsername());
+            } else {
+                printer.setTextColor(Color.GREEN);
+                printer.print("(available)");
+                printer.setTextColor(Color.NONE);
+            }
+            printer.setTextColor(Color.BLACK);
+            printer.print("  black: ");
+            if (game.blackUsername() != null) {
+                printer.print(game.blackUsername());
+            } else {
+                printer.setTextColor(Color.GREEN);
+                printer.print("(available)");
+                printer.setTextColor(Color.NONE);
+            }
+            printer.setTextColor(Color.NONE);
+            printer.newline();
         }
     }
 
@@ -187,11 +204,15 @@ public class Client {
             printErrorMessage("Unable to connect to server, please try again");
             return;
         }
-        printer.print("Joined game");
+        printer.newline();
+        printer.drawBoard(new ChessGame().getBoard(), color == TeamColor.BLACK);
+        printer.newline();
     }
 
     private void observeGame(int gameID) {
-
+        printer.newline();
+        printer.drawBoard(new ChessGame().getBoard(), false);
+        printer.newline();
     }
 
     private void logout() {
@@ -209,7 +230,7 @@ public class Client {
         }
         authToken = null;
         isLoggedIn = false;
-        printer.print("Logged out");
+        printer.println("Logged out");
     }
 
     private void printErrorMessage(String message) {
@@ -288,7 +309,7 @@ public class Client {
                                 var possibleInputs = type.getEnumConstants();
                                 boolean isValid = false;
                                 for (var possibleInput : possibleInputs) {
-                                    if (possibleInput.toString().equals(commandArgument)) {
+                                    if (possibleInput.toString().equalsIgnoreCase(commandArgument)) {
                                         argValues[i] = possibleInput;
                                         isValid = true;
                                     }
