@@ -84,9 +84,7 @@ public class Client {
             printer.print("Logged in as " + response.username());
             authToken = response.authToken();
             isLoggedIn = true;
-        } catch (Exception e) {
-
-        }
+        } 
     }
 
     private void createGame(String name) {
@@ -109,10 +107,6 @@ public class Client {
         server.logout(authToken);
         authToken = null;
         isLoggedIn = false;
-    }
-
-    private void handleServerException(Exception e) {
-
     }
 
     public boolean isLoggedIn() {
