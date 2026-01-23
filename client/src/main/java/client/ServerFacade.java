@@ -133,6 +133,10 @@ public class ServerFacade {
         }
     }
 
+    public void clearDB() throws ConnectionErrorException {
+        delete("/db");
+    }
+
     public void observeGame(int gameID) {
 
     }
