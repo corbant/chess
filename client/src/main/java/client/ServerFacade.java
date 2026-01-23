@@ -10,6 +10,8 @@ import java.util.Map;
 
 import com.google.gson.Gson;
 
+import chess.ChessGame.TeamColor;
+
 public class ServerFacade {
     private final String baseUrl;
     private final HttpClient client = HttpClient.newHttpClient();
@@ -110,7 +112,7 @@ public class ServerFacade {
         return gson.fromJson(response.body(), ListGamesResponse.class);
     }
 
-    public void playGame(String authToken, int gameID, String playerColor)
+    public void playGame(String authToken, int gameID, TeamColor playerColor)
             throws BadRequestException, UnauthorizedException, AlreadyTakenException, ServerErrorException,
             ConnectionErrorException {
         var body = Map.ofEntries(Map.entry("gameID", gameID), Map.entry("playerColor", playerColor));

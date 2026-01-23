@@ -75,28 +75,119 @@ public class Client {
     }
 
     private void register(String username, String password, String email) {
-        server.register(username, password, email);
+        LoginResponse response;
+        try {
+            response = server.register(username, password, email);
+        } catch (BadRequestException e) {
+            printErrorMessage("Invalid username, password, or email");
+            return;
+        } catch (AlreadyTakenException e) {
+            printErrorMessage("The username you provided has already been registered");
+            return;
+        } catch (ServerErrorException e) {
+            printErrorMessage("Internal server error, unable to complete command");
+            return;
+        } catch (ConnectionErrorException e) {
+            printErrorMessage("Unable to connect to server, please try again");
+            return;
+        }
+        authToken = response.authToken();
+        isLoggedIn = true;
+        printer.print("Logged in as " + response.username());
     }
 
     private void login(String username, String password) {
+        LoginResponse response;
         try {
-            LoginResponse response = server.login(username, password);
-            printer.print("Logged in as " + response.username());
-            authToken = response.authToken();
-            isLoggedIn = true;
-        } 
+            response = server.login(username, password);
+        } catch (BadRequestException e) {
+            printErrorMessage("Invalid username or password");
+            return;
+        } catch (UnauthorizedException e) {
+            printErrorMessage("Invalid username or password");
+            return;
+        } catch (ServerErrorException e) {
+            printErrorMessage("Internal server error, unable to complete command");
+            return;
+        } catch (ConnectionErrorException e) {
+            printErrorMessage("Unable to connect to server, please try again");
+            return;
+        }
+        authToken = response.authToken();
+        isLoggedIn = true;
+        printer.print("Logged in as " + response.username());
     }
 
     private void createGame(String name) {
-
+        CreateGameResponse response;
+        try {
+            response = server.createGame(authToken, name);
+        } catch (UnauthorizedException e) {
+            printErrorMessage("Please login before using this command");
+            return;
+        } catch (BadRequestException e) {
+            printErrorMessage("Invalid game name");
+            return;
+        } catch (ServerErrorException e) {
+            printErrorMessage("Internal server error, unable to complete command");
+            return;
+        } catch (ConnectionErrorException e) {
+            printErrorMessage("Unable to connect to server, please try again");
+            return;
+        }
+        printer.print("New game created with game ID " + response.gameID());
     }
 
     private void listGames() {
-
+        ListGamesResponse response;
+        try {
+            response = server.listGames(authToken);
+        } catch (UnauthorizedException e) {
+            printErrorMessage("Please login before using this command");
+            return;
+        } catch (ServerErrorException e) {
+            printErrorMessage("Internal server error, unable to complete command");
+            return;
+        } catch (ConnectionErrorException e) {
+            printErrorMessage("Unable to connect to server, please try again");
+            return;
+        }
+        printer.println("Games:");
+        for (var game : response.games()) {
+            printer.setTextColor(Color.BLUE);
+            printer.print("" + game.gameID());
+            printer.setTextColor(Color.NONE);
+            printer.print(" - ");
+            printer.setTextColor(Color.MAGENTA);
+            printer.print(game.gameName());
+            printer.setTextColor(Color.NONE);
+            printer.print(" | ");
+            printer.setTextColor(Color.YELLOW);
+            printer.print("White: " + game.whiteUsername() != null ? game.whiteUsername() : "AVAILABLE");
+            printer.println(" Black: " + game.blackUsername() != null ? game.blackUsername() : "AVAILABLE");
+        }
     }
 
     private void joinGame(int gameID, TeamColor color) {
-
+        try {
+            server.playGame(authToken, gameID, color);
+        } catch (BadRequestException e) {
+            printErrorMessage("Invalid gameID or team color");
+            return;
+        } catch (UnauthorizedException e) {
+            printErrorMessage("Please login before using this command");
+            return;
+        } catch (AlreadyTakenException e) {
+            printErrorMessage("The color you selected has already been taken");
+            return;
+        } catch (ServerErrorException e) {
+            printErrorMessage("Internal server error, unable to complete command");
+            return;
+        } catch (ConnectionErrorException e) {
+            printErrorMessage("Unable to connect to server, please try again");
+            return;
+        }
+        printer.print("Joined game");
     }
 
     private void observeGame(int gameID) {
@@ -104,9 +195,27 @@ public class Client {
     }
 
     private void logout() {
-        server.logout(authToken);
+        try {
+            server.logout(authToken);
+        } catch (UnauthorizedException e) {
+            printErrorMessage("Please login before using this command");
+            return;
+        } catch (ServerErrorException e) {
+            printErrorMessage("Internal server error, unable to complete command");
+            return;
+        } catch (ConnectionErrorException e) {
+            printErrorMessage("Unable to connect to server, please try again");
+            return;
+        }
         authToken = null;
         isLoggedIn = false;
+        printer.print("Logged out");
+    }
+
+    private void printErrorMessage(String message) {
+        printer.setTextColor(Color.RED);
+        printer.println(message);
+        printer.setTextColor(Color.NONE);
     }
 
     public boolean isLoggedIn() {
