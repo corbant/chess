@@ -11,46 +11,65 @@ import java.util.Map;
 import com.google.gson.Gson;
 
 public class ServerFacade {
-    private final String BASE_URL;
-    private final HttpClient client;
+    private final String baseUrl;
+    private final HttpClient client = HttpClient.newHttpClient();
     private final static String AUTH_HEADER_NAME = "authorization";
-    private String authToken;
+    private final Gson gson = new Gson();
 
     public ServerFacade(int hostname, int port) {
-        this.BASE_URL = String.format("http://%s:%d", hostname, port);
-        client = HttpClient.newHttpClient();
+        this.baseUrl = String.format("http://%s:%d", hostname, port);
     }
 
-    public void login(String username, String password) {
+    public ServerFacade(String serverUrl) {
+        this.baseUrl = serverUrl;
+    }
+
+    public LoginResponse login(String username, String password)
+            throws BadRequestException, UnauthorizedException, ServerErrorException {
         var body = Map.ofEntries(Map.entry("username", username), Map.entry("password", password));
-        var jsonBody = new Gson().toJson(body);
+        var jsonBody = gson.toJson(body);
         var response = post("/session", jsonBody);
+        if (response.statusCode() != 200) {
+            String message = gson.fromJson(response.body(), ServerMessage.class).message();
+            switch (response.statusCode()) {
+                case 400:
+                    throw new BadRequestException(message);
+                case 401:
+                    throw new UnauthorizedException(message);
+                case 500:
+                    throw new ServerErrorException(message);
+            }
+        }
+        return gson.fromJson(response.body(), LoginResponse.class);
     }
 
-    public void logout() {
+    public void logout(String authToken) throws UnauthorizedException, ServerErrorException {
         var response = delete("/session", authToken);
     }
 
-    public void register(String username, String password, String email) {
+    public void register(String username, String password, String email)
+            throws BadRequestException, AlreadyTakenException, ServerErrorException {
         var body = Map.ofEntries(Map.entry("username", username), Map.entry("password", password),
                 Map.entry("email", email));
-        var jsonBody = new Gson().toJson(body);
+        var jsonBody = gson.toJson(body);
         var response = post("/user", jsonBody);
     }
 
-    public void createGame(String gameName) {
+    public void createGame(String authToken, String gameName)
+            throws UnauthorizedException, BadRequestException, ServerErrorException {
         var body = Map.ofEntries(Map.entry("gameName", gameName));
-        var jsonBody = new Gson().toJson(body);
+        var jsonBody = gson.toJson(body);
         var response = post("/game", authToken, jsonBody);
     }
 
-    public void listGames() {
+    public void listGames(String authToken) throws UnauthorizedException, ServerErrorException {
         var response = get("/game", authToken);
     }
 
-    public void playGame(int gameID, String playerColor) {
+    public void playGame(String authToken, int gameID, String playerColor)
+            throws BadRequestException, UnauthorizedException, AlreadyTakenException, ServerErrorException {
         var body = Map.ofEntries(Map.entry("gameID", gameID), Map.entry("playerColor", playerColor));
-        var jsonBody = new Gson().toJson(body);
+        var jsonBody = gson.toJson(body);
         var response = put("/game", authToken, jsonBody);
     }
 
@@ -58,17 +77,9 @@ public class ServerFacade {
 
     }
 
-    public void setAuthToken(String authToken) {
-        this.authToken = authToken;
-    }
-
-    public void clearAuthToken() {
-        this.authToken = null;
-    }
-
     private URI getUri(String path) {
         try {
-            return new URI(BASE_URL + "/session");
+            return new URI(baseUrl + "/session");
         } catch (Exception e) {
             return null;
         }

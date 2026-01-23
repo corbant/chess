@@ -15,10 +15,17 @@ public class ChessBoardPrinter extends StreamPrinter {
         super(output);
     }
 
-    public void draw(ChessBoard board) {
+    public void drawBoard(ChessBoard board, boolean isBlack) {
+        int rowStart = isBlack ? ChessBoard.BOARD_ROWS + 1 : 0;
+        int rowEnd = isBlack ? -1 : ChessBoard.BOARD_ROWS + 2;
+        int rowDelta = isBlack ? -1 : 1;
+
+        int colStart = isBlack ? ChessBoard.BOARD_COLS + 1 : 0;
+        int colEnd = isBlack ? -1 : ChessBoard.BOARD_ROWS + 2;
+        int colDelta = isBlack ? -1 : 1;
         // starts in the top left
-        for (int row = 0; row <= ChessBoard.BOARD_ROWS + 1; row++) {
-            for (int col = 0; col <= ChessBoard.BOARD_COLS + 1; col++) {
+        for (int row = rowStart; isBlack ? row > rowEnd : row < rowEnd; row += rowDelta) {
+            for (int col = colStart; isBlack ? col > colEnd : col < rowEnd; col += colDelta) {
                 if (row < 1 || row > ChessBoard.BOARD_ROWS || col < 1 || col > ChessBoard.BOARD_COLS) {
                     // border
                     setBackgroundColor(Color.LIGHT_GREY);
@@ -37,7 +44,10 @@ public class ChessBoardPrinter extends StreamPrinter {
                     // determine background color
                     setBackgroundColor((row % 2 == 0 && col % 2 != 0) || (row % 2 != 0 && col % 2 == 0) ? Color.BLACK
                             : Color.WHITE);
-                    ChessPiece piece = board.getPiece(new ChessPosition(row, col));
+                    // rows are reversed since the console prints top to bottom whereas the board is
+                    // bottom to top
+                    ChessPiece piece = board
+                            .getPiece(new ChessPosition(ChessBoard.BOARD_ROWS - row + 1, col));
                     if (piece != null) {
                         drawChessPiece(piece.getPieceType(), piece.getTeamColor());
                     } else {
