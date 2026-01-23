@@ -17,8 +17,9 @@ public class Client {
     private ChessBoardPrinter printer;
 
     private List<Command> loggedOutCommands = List.of(new Command("register", "to create an account",
-            List.of(Map.entry("username", String.class), Map.entry("password", String.class),
-                    Map.entry("email", String.class)),
+            List.of(new CommandArgument("username", String.class, true),
+                    new CommandArgument("password", String.class, true),
+                    new CommandArgument("email", String.class, true)),
             (commandArgs) -> {
                 String username = (String) commandArgs[0];
                 String password = (String) commandArgs[1];
@@ -26,7 +27,8 @@ public class Client {
                 register(username, password, email);
             }),
             new Command("login", "to play chess",
-                    List.of(Map.entry("username", String.class), Map.entry("password", String.class)),
+                    List.of(new CommandArgument("username", String.class, true),
+                            new CommandArgument("password", String.class, true)),
                     (commandArgs) -> {
                         String username = (String) commandArgs[0];
                         String password = (String) commandArgs[1];
@@ -41,24 +43,27 @@ public class Client {
             }));
 
     private List<Command> loggedInCommands = List
-            .of(new Command("create", "a game", List.of(Map.entry("name", String.class)), (commandArgs) -> {
-                String name = (String) commandArgs[0];
-                createGame(name);
-            }),
+            .of(new Command("create", "a game", List.of(new CommandArgument("name", String.class, true)),
+                    (commandArgs) -> {
+                        String name = (String) commandArgs[0];
+                        createGame(name);
+                    }),
                     new Command("list", "games", null, (commandArgs) -> {
                         listGames();
                     }),
                     new Command("join", "a game",
-                            List.of(Map.entry("ID", Integer.class), Map.entry("color", TeamColor.class)),
+                            List.of(new CommandArgument("id", Integer.class, true),
+                                    new CommandArgument("color", TeamColor.class, true)),
                             (commandArgs) -> {
                                 int id = (int) commandArgs[0];
                                 TeamColor color = (TeamColor) commandArgs[1];
                                 joinGame(id, color);
                             }),
-                    new Command("observe", "a game", List.of(Map.entry("ID", Integer.class)), (commandArgs) -> {
-                        int id = (int) commandArgs[0];
-                        observeGame(id);
-                    }),
+                    new Command("observe", "a game", List.of(new CommandArgument("id", Integer.class, true)),
+                            (commandArgs) -> {
+                                int id = (int) commandArgs[0];
+                                observeGame(id);
+                            }),
                     new Command("logout", "when you are done", null, (commandArgs) -> {
                         logout();
                     }),
@@ -70,6 +75,30 @@ public class Client {
                     new Command("help", "with possible commands", null, (commandArgs) -> {
                         listCommands(printer, getAvailableCommands());
                     }));
+    private List<Command> gameplayCommands = List.of(
+            new Command("redraw", "the chess board", null, (commandArgs) -> {
+
+            }),
+            new Command("leave", "the game", null, (commandArgs) -> {
+
+            }),
+            new Command("move", "a chess piece",
+                    List.of(new CommandArgument("from", String.class, true),
+                            new CommandArgument("to", String.class, true),
+                            new CommandArgument("promotion", Character.class, false)),
+                    (commandArgs) -> {
+
+                    }),
+            new Command("resign", "the game", null, (commandArgs) -> {
+
+            }),
+            new Command("moves", "show all legal moves for piece",
+                    List.of(new CommandArgument("piece", String.class, true)), (commandArgs) -> {
+
+                    }),
+            new Command("help", "with possible commands", null, (commandArgs) -> {
+                listCommands(printer, getAvailableCommands());
+            }));
 
     public Client(String serverUrl, ChessBoardPrinter printer) {
         this.server = new ServerFacade(serverUrl);
@@ -268,12 +297,14 @@ public class Client {
         printer.print("- " + command.description() + "\n");
     }
 
-    private void printArgumentFormat(StreamPrinter printer, Map.Entry<String, Class<?>> arg) {
-        Class<?> type = arg.getValue();
+    private void printArgumentFormat(StreamPrinter printer, CommandArgument arg) {
+        Class<?> type = arg.type();
         if (type.isEnum()) {
             printEnumOptions(printer, type);
+        } else if (!arg.required()) {
+            printer.print("[" + arg.name().toUpperCase() + "] ");
         } else {
-            printer.print("<" + arg.getKey().toUpperCase() + "> ");
+            printer.print("<" + arg.name().toUpperCase() + "> ");
         }
     }
 
@@ -322,21 +353,25 @@ public class Client {
         return argValues;
     }
 
-    private Object parseArgument(Scanner scanner, Map.Entry<String, Class<?>> arg) throws InvalidCommandException {
-        Class<?> type = arg.getValue();
+    private Object parseArgument(Scanner scanner, CommandArgument arg) throws InvalidCommandException {
+        Class<?> type = arg.type();
         if (!scanner.hasNext()) {
-            throw new InvalidCommandException("Missing Argument " + arg.getKey());
+            if (arg.required()) {
+                throw new InvalidCommandException("Missing Argument " + arg.name());
+            } else {
+                return null;
+            }
         }
 
         if (type == String.class) {
             return scanner.next();
         } else if (type == Integer.class) {
             if (!scanner.hasNextInt()) {
-                throw new InvalidCommandException("Invalid Argument " + arg.getKey());
+                throw new InvalidCommandException("Invalid Argument " + arg.name());
             }
             return scanner.nextInt();
         } else if (type.isEnum()) {
-            return parseEnumArgument(scanner, type, arg.getKey());
+            return parseEnumArgument(scanner, type, arg.name());
         }
         throw new InvalidCommandException("Unknown argument type");
     }
