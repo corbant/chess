@@ -10,7 +10,6 @@ import chess.ChessPiece.PieceType;
 
 public class ChessBoardPrinter extends StreamPrinter {
 
-    // TODO: add customization options
     public ChessBoardPrinter(PrintStream output) {
         super(output);
     }

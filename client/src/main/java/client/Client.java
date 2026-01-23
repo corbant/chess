@@ -51,13 +51,13 @@ public class Client {
                     new Command("join", "a game",
                             List.of(Map.entry("ID", Integer.class), Map.entry("color", TeamColor.class)),
                             (commandArgs) -> {
-                                int ID = (int) commandArgs[0];
+                                int id = (int) commandArgs[0];
                                 TeamColor color = (TeamColor) commandArgs[1];
-                                joinGame(ID, color);
+                                joinGame(id, color);
                             }),
                     new Command("observe", "a game", List.of(Map.entry("ID", Integer.class)), (commandArgs) -> {
-                        int ID = (int) commandArgs[0];
-                        observeGame(ID);
+                        int id = (int) commandArgs[0];
+                        observeGame(id);
                     }),
                     new Command("logout", "when you are done", null, (commandArgs) -> {
                         logout();
@@ -286,45 +286,63 @@ public class Client {
     public void interpretCommand(String line) throws InvalidCommandException {
         try (var lineScanner = new Scanner(line).useDelimiter(" ")) {
             var commandName = lineScanner.next();
-            for (var command : getAvailableCommands()) {
-                if (command.name().equalsIgnoreCase(commandName)) {
-                    Object[] argValues = null;
-                    if (command.args() != null && !command.args().isEmpty()) {
-                        argValues = new Object[command.args().size()];
-                        for (int i = 0; i < command.args().size(); i++) {
-                            var arg = command.args().get(i);
-                            Class<?> type = arg.getValue();
-                            if (!lineScanner.hasNext()) {
-                                throw new InvalidCommandException("Missing Argument " + arg.getKey());
-                            }
-                            if (type == String.class) {
-                                argValues[i] = lineScanner.next();
-                            } else if (type == Integer.class) {
-                                if (!lineScanner.hasNextInt()) {
-                                    throw new InvalidCommandException("Invalid Argument " + arg.getKey());
-                                }
-                                argValues[i] = lineScanner.nextInt();
-                            } else if (type.isEnum()) {
-                                String commandArgument = lineScanner.next();
-                                var possibleInputs = type.getEnumConstants();
-                                boolean isValid = false;
-                                for (var possibleInput : possibleInputs) {
-                                    if (possibleInput.toString().equalsIgnoreCase(commandArgument)) {
-                                        argValues[i] = possibleInput;
-                                        isValid = true;
-                                    }
-                                }
-                                if (!isValid) {
-                                    throw new InvalidCommandException("Invalid Argument " + arg.getKey());
-                                }
-                            }
-                        }
-                    }
-                    command.handler().accept(argValues);
-                    return;
-                }
+            var command = findCommand(commandName, getAvailableCommands());
+            if (command == null) {
+                throw new InvalidCommandException("Unknown Command (Type \"help\" for list of available commands)");
             }
-            throw new InvalidCommandException("Unknown Command (Type \"help\" for list of available commands)");
+            Object[] argValues = parseArguments(lineScanner, command);
+            command.handler().accept(argValues);
         }
+    }
+
+    private Command findCommand(String name, List<Command> commands) {
+        for (var command : commands) {
+            if (command.name().equalsIgnoreCase(name)) {
+                return command;
+            }
+        }
+        return null;
+    }
+
+    private Object[] parseArguments(Scanner lineScanner, Command command) throws InvalidCommandException {
+        if (command.args() == null || command.args().isEmpty()) {
+            return null;
+        }
+
+        Object[] argValues = new Object[command.args().size()];
+        for (int i = 0; i < command.args().size(); i++) {
+            argValues[i] = parseArgument(lineScanner, command.args().get(i));
+        }
+        return argValues;
+    }
+
+    private Object parseArgument(Scanner scanner, Map.Entry<String, Class<?>> arg) throws InvalidCommandException {
+        Class<?> type = arg.getValue();
+        if (!scanner.hasNext()) {
+            throw new InvalidCommandException("Missing Argument " + arg.getKey());
+        }
+
+        if (type == String.class) {
+            return scanner.next();
+        } else if (type == Integer.class) {
+            if (!scanner.hasNextInt()) {
+                throw new InvalidCommandException("Invalid Argument " + arg.getKey());
+            }
+            return scanner.nextInt();
+        } else if (type.isEnum()) {
+            return parseEnumArgument(scanner, type, arg.getKey());
+        }
+        throw new InvalidCommandException("Unknown argument type");
+    }
+
+    private Object parseEnumArgument(Scanner scanner, Class<?> enumType, String argName)
+            throws InvalidCommandException {
+        String value = scanner.next();
+        for (var option : enumType.getEnumConstants()) {
+            if (option.toString().equalsIgnoreCase(value)) {
+                return option;
+            }
+        }
+        throw new InvalidCommandException("Invalid Argument " + argName);
     }
 }

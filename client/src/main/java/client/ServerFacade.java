@@ -33,13 +33,9 @@ public class ServerFacade {
         var response = post("/session", jsonBody);
         if (response.statusCode() != 200) {
             String message = gson.fromJson(response.body(), ServerMessage.class).message();
-            switch (response.statusCode()) {
-                case 400:
-                    throw new BadRequestException(message);
-                case 401:
-                    throw new UnauthorizedException(message);
-                case 500:
-                    throw new ServerErrorException(message);
+            try {
+                handleErrorStatusCode(response.statusCode(), message);
+            } catch (AlreadyTakenException e) {
             }
         }
         return gson.fromJson(response.body(), LoginResponse.class);
@@ -49,11 +45,9 @@ public class ServerFacade {
         var response = delete("/session", authToken);
         if (response.statusCode() != 200) {
             String message = gson.fromJson(response.body(), ServerMessage.class).message();
-            switch (response.statusCode()) {
-                case 401:
-                    throw new UnauthorizedException(message);
-                case 500:
-                    throw new ServerErrorException(message);
+            try {
+                handleErrorStatusCode(response.statusCode(), message);
+            } catch (BadRequestException | AlreadyTakenException e) {
             }
         }
     }
@@ -66,14 +60,11 @@ public class ServerFacade {
         var response = post("/user", jsonBody);
         if (response.statusCode() != 200) {
             String message = gson.fromJson(response.body(), ServerMessage.class).message();
-            switch (response.statusCode()) {
-                case 400:
-                    throw new BadRequestException(message);
-                case 403:
-                    throw new AlreadyTakenException(message);
-                case 500:
-                    throw new ServerErrorException(message);
+            try {
+                handleErrorStatusCode(response.statusCode(), message);
+            } catch (UnauthorizedException e) {
             }
+
         }
         return gson.fromJson(response.body(), LoginResponse.class);
     }
@@ -85,13 +76,9 @@ public class ServerFacade {
         var response = post("/game", authToken, jsonBody);
         if (response.statusCode() != 200) {
             String message = gson.fromJson(response.body(), ServerMessage.class).message();
-            switch (response.statusCode()) {
-                case 400:
-                    throw new BadRequestException(message);
-                case 401:
-                    throw new UnauthorizedException(message);
-                case 500:
-                    throw new ServerErrorException(message);
+            try {
+                handleErrorStatusCode(response.statusCode(), message);
+            } catch (AlreadyTakenException e) {
             }
         }
         return gson.fromJson(response.body(), CreateGameResponse.class);
@@ -102,11 +89,9 @@ public class ServerFacade {
         var response = get("/game", authToken);
         if (response.statusCode() != 200) {
             String message = gson.fromJson(response.body(), ServerMessage.class).message();
-            switch (response.statusCode()) {
-                case 401:
-                    throw new UnauthorizedException(message);
-                case 500:
-                    throw new ServerErrorException(message);
+            try {
+                handleErrorStatusCode(response.statusCode(), message);
+            } catch (BadRequestException | AlreadyTakenException e) {
             }
         }
         return gson.fromJson(response.body(), ListGamesResponse.class);
@@ -120,16 +105,7 @@ public class ServerFacade {
         var response = put("/game", authToken, jsonBody);
         if (response.statusCode() != 200) {
             String message = gson.fromJson(response.body(), ServerMessage.class).message();
-            switch (response.statusCode()) {
-                case 400:
-                    throw new BadRequestException(message);
-                case 401:
-                    throw new UnauthorizedException(message);
-                case 403:
-                    throw new AlreadyTakenException(message);
-                case 500:
-                    throw new ServerErrorException(message);
-            }
+            handleErrorStatusCode(response.statusCode(), message);
         }
     }
 
@@ -139,6 +115,20 @@ public class ServerFacade {
 
     public void observeGame(int gameID) {
 
+    }
+
+    private void handleErrorStatusCode(int code, String message)
+            throws BadRequestException, UnauthorizedException, AlreadyTakenException, ServerErrorException {
+        switch (code) {
+            case 400:
+                throw new BadRequestException(message);
+            case 401:
+                throw new UnauthorizedException(message);
+            case 403:
+                throw new AlreadyTakenException(message);
+            case 500:
+                throw new ServerErrorException(message);
+        }
     }
 
     private URI getUri(String path) {
