@@ -94,10 +94,6 @@ public class ServerFacade {
         delete("/db");
     }
 
-    public void observeGame(int gameID) {
-
-    }
-
     private void handleErrorStatusCode(int code, String message)
             throws BadRequestException, UnauthorizedException, AlreadyTakenException, ServerErrorException {
         switch (code) {
