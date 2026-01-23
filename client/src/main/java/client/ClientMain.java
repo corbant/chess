@@ -1,5 +1,7 @@
 package client;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
@@ -12,9 +14,16 @@ import ui.StreamPrinter;
 
 public class ClientMain {
 
+    public static boolean isLoggedIn = false;
+
     public static void main(String[] args) {
 
-        Command[] loggedOutCommands = new Command[] {
+        var game = new ChessGame();
+        var boardDrawer = new ChessBoardPrinter(System.out);
+        var textPrinter = new StreamPrinter(System.out);
+        var inputReader = new Scanner(System.in);
+
+        List<Command> loggedOutCommands = new ArrayList<>(Arrays.asList(
                 new Command("register", "to create an account",
                         List.of(Map.entry("username", String.class), Map.entry("password", String.class),
                                 Map.entry("email", String.class)),
@@ -31,13 +40,9 @@ public class ClientMain {
                         }),
                 new Command("quit", "playing chess", null, (commandArgs) -> {
                     return;
-                }),
-                new Command("help", "with possible commands", null, (commandArgs) -> {
-                    return;
-                })
-        };
+                })));
 
-        Command[] loggedInCommands = new Command[] {
+        List<Command> loggedInCommands = new ArrayList<>(Arrays.asList(
                 new Command("create", "a game", List.of(Map.entry("name", String.class)), (commandArgs) -> {
                     String name = (String) commandArgs[0];
                 }),
@@ -56,30 +61,58 @@ public class ClientMain {
                     return;
                 }),
                 new Command("quit", "playing chess", null, (commandArgs) -> {
-                    return;
-                }),
-                new Command("help", "with possible commands", null, (commandArgs) -> {
-                    return;
-                })
-        };
+                    System.out.println("Bye!");
+                    System.exit(0);
+                })));
+
+        // Update help commands with proper references
+        loggedOutCommands.add(new Command("help", "with possible commands", null, (commandArgs) -> {
+            listCommands(textPrinter, loggedOutCommands);
+        }));
+        loggedInCommands.add(new Command("help", "with possible commands", null, (commandArgs) -> {
+            listCommands(textPrinter, loggedInCommands);
+        }));
         // var serverUrl = "http://localhost:8080";
         // if (args.length == 1) {
         // serverUrl = args[0];
         // }
 
         // new Repl(serverUrl).run();
-        var game = new ChessGame();
-        var boardDrawer = new ChessBoardPrinter(System.out);
-        var textPrinter = new StreamPrinter(System.out);
         // try (var scanner = new Scanner(System.in)) {
         // scanner.nextLine();
         // }
         System.out.println("♕  Welcome to 240 Chess. Type help to get started. ♕");
+
+        String line;
+        do {
+            printTerminalInterface(textPrinter);
+            textPrinter.setTextColor(Color.GREEN);
+            line = inputReader.nextLine();
+            textPrinter.setTextColor(Color.NONE);
+            try {
+                interpretCommand(line, loggedOutCommands);
+            } catch (InvalidCommandException e) {
+                textPrinter.setTextColor(Color.RED);
+                textPrinter.println("Unable to execute command: " + e.getMessage());
+                textPrinter.setTextColor(Color.NONE);
+            }
+        } while (!line.equals("quit"));
+
         // listCommands(textPrinter, loggedInCommands);
         // boardDrawer.draw(game.getBoard());
     }
 
-    public static void listCommands(StreamPrinter printer, Command[] commands) {
+    public static void printTerminalInterface(StreamPrinter printer) {
+        printer.print("[");
+        if (isLoggedIn) {
+            printer.print("LOGGED_IN");
+        } else {
+            printer.print("LOGGED_OUT");
+        }
+        printer.print("] >>> ");
+    }
+
+    public static void listCommands(StreamPrinter printer, List<Command> commands) {
         for (var command : commands) {
             // name
             printer.setTextColor(Color.BLUE);
@@ -115,9 +148,9 @@ public class ClientMain {
         printer.setTextColor(Color.NONE);
     }
 
-    public static void interpretCommand(String line, Command[] possibleCommands) throws InvalidCommandException {
+    public static void interpretCommand(String line, List<Command> possibleCommands) throws InvalidCommandException {
         try (var lineScanner = new Scanner(line).useDelimiter(" ")) {
-            var commandName = lineScanner.nextLine();
+            var commandName = lineScanner.next();
             for (var command : possibleCommands) {
                 if (command.name().equalsIgnoreCase(commandName)) {
                     Object[] argValues = null;
@@ -152,10 +185,11 @@ public class ClientMain {
                             }
                         }
                     }
-                    command.handler().accept(possibleCommands);
+                    command.handler().accept(argValues);
                     return;
                 }
             }
+            throw new InvalidCommandException("Unknown Command (Type \"help\" for list of available commands)");
         }
     }
 }
