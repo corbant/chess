@@ -249,38 +249,42 @@ public class Client {
 
     public void listCommands(StreamPrinter printer, List<Command> commands) {
         for (var command : commands) {
-            // name
-            printer.setTextColor(Color.BLUE);
-            printer.print(command.name() + " ");
-
-            // args
-            if (command.args() != null && !command.args().isEmpty()) {
-                for (var arg : command.args()) {
-                    Class<?> type = arg.getValue();
-
-                    if (type.isEnum()) {
-                        var options = type.getEnumConstants();
-                        printer.print("[");
-                        for (int i = 0; i < options.length; i++) {
-                            printer.print(options[i].toString().toUpperCase());
-                            if (i < options.length - 1) {
-                                printer.print("|");
-                            }
-                        }
-                        printer.print("] ");
-                    } else {
-                        printer.print("<");
-                        printer.print(arg.getKey().toUpperCase());
-                        printer.print("> ");
-                    }
-                }
-            }
-
-            // description
-            printer.setTextColor(Color.MAGENTA);
-            printer.print("- " + command.description() + "\n");
+            listCommand(printer, command);
         }
         printer.setTextColor(Color.NONE);
+    }
+
+    private void listCommand(StreamPrinter printer, Command command) {
+        // name
+        printer.setTextColor(Color.BLUE);
+        printer.print(command.name() + " ");
+
+        // args
+        if (command.args() != null && !command.args().isEmpty()) {
+            for (var arg : command.args()) {
+                Class<?> type = arg.getValue();
+
+                if (type.isEnum()) {
+                    var options = type.getEnumConstants();
+                    printer.print("[");
+                    for (int i = 0; i < options.length; i++) {
+                        printer.print(options[i].toString().toUpperCase());
+                        if (i < options.length - 1) {
+                            printer.print("|");
+                        }
+                    }
+                    printer.print("] ");
+                } else {
+                    printer.print("<");
+                    printer.print(arg.getKey().toUpperCase());
+                    printer.print("> ");
+                }
+            }
+        }
+
+        // description
+        printer.setTextColor(Color.MAGENTA);
+        printer.print("- " + command.description() + "\n");
     }
 
     public void interpretCommand(String line) throws InvalidCommandException {

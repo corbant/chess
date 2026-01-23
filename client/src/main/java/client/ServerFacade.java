@@ -31,24 +31,18 @@ public class ServerFacade {
         var body = Map.ofEntries(Map.entry("username", username), Map.entry("password", password));
         var jsonBody = gson.toJson(body);
         var response = post("/session", jsonBody);
-        if (response.statusCode() != 200) {
-            String message = gson.fromJson(response.body(), ServerMessage.class).message();
-            try {
-                handleErrorStatusCode(response.statusCode(), message);
-            } catch (AlreadyTakenException e) {
-            }
+        try {
+            return parseResponse(response, LoginResponse.class);
+        } catch (AlreadyTakenException e) {
+            return null;
         }
-        return gson.fromJson(response.body(), LoginResponse.class);
     }
 
     public void logout(String authToken) throws UnauthorizedException, ServerErrorException, ConnectionErrorException {
         var response = delete("/session", authToken);
-        if (response.statusCode() != 200) {
-            String message = gson.fromJson(response.body(), ServerMessage.class).message();
-            try {
-                handleErrorStatusCode(response.statusCode(), message);
-            } catch (BadRequestException | AlreadyTakenException e) {
-            }
+        try {
+            parseResponse(response, null);
+        } catch (BadRequestException | AlreadyTakenException e) {
         }
     }
 
@@ -58,15 +52,11 @@ public class ServerFacade {
                 Map.entry("email", email));
         var jsonBody = gson.toJson(body);
         var response = post("/user", jsonBody);
-        if (response.statusCode() != 200) {
-            String message = gson.fromJson(response.body(), ServerMessage.class).message();
-            try {
-                handleErrorStatusCode(response.statusCode(), message);
-            } catch (UnauthorizedException e) {
-            }
-
+        try {
+            return parseResponse(response, LoginResponse.class);
+        } catch (UnauthorizedException e) {
+            return null;
         }
-        return gson.fromJson(response.body(), LoginResponse.class);
     }
 
     public CreateGameResponse createGame(String authToken, String gameName)
@@ -74,27 +64,21 @@ public class ServerFacade {
         var body = Map.ofEntries(Map.entry("gameName", gameName));
         var jsonBody = gson.toJson(body);
         var response = post("/game", authToken, jsonBody);
-        if (response.statusCode() != 200) {
-            String message = gson.fromJson(response.body(), ServerMessage.class).message();
-            try {
-                handleErrorStatusCode(response.statusCode(), message);
-            } catch (AlreadyTakenException e) {
-            }
+        try {
+            return parseResponse(response, CreateGameResponse.class);
+        } catch (AlreadyTakenException e) {
+            return null;
         }
-        return gson.fromJson(response.body(), CreateGameResponse.class);
     }
 
     public ListGamesResponse listGames(String authToken)
             throws UnauthorizedException, ServerErrorException, ConnectionErrorException {
         var response = get("/game", authToken);
-        if (response.statusCode() != 200) {
-            String message = gson.fromJson(response.body(), ServerMessage.class).message();
-            try {
-                handleErrorStatusCode(response.statusCode(), message);
-            } catch (BadRequestException | AlreadyTakenException e) {
-            }
+        try {
+            return parseResponse(response, ListGamesResponse.class);
+        } catch (BadRequestException | AlreadyTakenException e) {
+            return null;
         }
-        return gson.fromJson(response.body(), ListGamesResponse.class);
     }
 
     public void playGame(String authToken, int gameID, TeamColor playerColor)
@@ -103,10 +87,7 @@ public class ServerFacade {
         var body = Map.ofEntries(Map.entry("gameID", gameID), Map.entry("playerColor", playerColor));
         var jsonBody = gson.toJson(body);
         var response = put("/game", authToken, jsonBody);
-        if (response.statusCode() != 200) {
-            String message = gson.fromJson(response.body(), ServerMessage.class).message();
-            handleErrorStatusCode(response.statusCode(), message);
-        }
+        parseResponse(response, null);
     }
 
     public void clearDB() throws ConnectionErrorException {
@@ -129,6 +110,18 @@ public class ServerFacade {
             case 500:
                 throw new ServerErrorException(message);
         }
+    }
+
+    private <T> T parseResponse(HttpResponse<String> response, Class<T> responseClass)
+            throws BadRequestException, UnauthorizedException, AlreadyTakenException, ServerErrorException {
+        if (response.statusCode() != 200) {
+            String message = gson.fromJson(response.body(), ServerMessage.class).message();
+            handleErrorStatusCode(response.statusCode(), message);
+        }
+        if (responseClass == null) {
+            return null;
+        }
+        return gson.fromJson(response.body(), responseClass);
     }
 
     private URI getUri(String path) {

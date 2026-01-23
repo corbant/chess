@@ -91,38 +91,4 @@ public class StreamPrinter {
                 break;
         }
     }
-
-    // public void setTextEffect(TextEffect effect) {
-    // switch (effect) {
-    // case BOLD:
-    // out.print(EscapeSequences.SET_TEXT_BOLD);
-    // break;
-    // case FAINT:
-    // out.print(EscapeSequences.SET_TEXT_FAINT);
-    // break;
-    // case ITALIC:
-    // out.print(EscapeSequences.SET_TEXT_ITALIC);
-    // break;
-    // case UNDERLINE:
-    // out.print(EscapeSequences.SET_TEXT_UNDERLINE);
-    // break;
-    // case BLINKING:
-    // out.print(EscapeSequences.SET_TEXT_BLINKING);
-    // break;
-    // case NONE:
-    // out.print(EscapeSequences.RESET_TEXT_BOLD_FAINT);
-    // out.print(EscapeSequences.RESET_TEXT_ITALIC);
-    // out.print(EscapeSequences.RESET_TEXT_UNDERLINE);
-    // out.print(EscapeSequences.RESET_TEXT_BLINKING);
-    // break;
-    // }
-    // }
-
-    // public void eraseScreen() {
-    // out.print(EscapeSequences.ERASE_SCREEN);
-    // }
-
-    // public void eraseLine() {
-    // out.print(EscapeSequences.ERASE_LINE);
-    // }
 }
