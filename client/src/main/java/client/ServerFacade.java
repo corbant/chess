@@ -18,7 +18,7 @@ public class ServerFacade {
     private final static String AUTH_HEADER_NAME = "authorization";
     private final Gson gson = new Gson();
 
-    public ServerFacade(int hostname, int port) {
+    public ServerFacade(String hostname, int port) {
         this.baseUrl = String.format("http://%s:%d", hostname, port);
     }
 
