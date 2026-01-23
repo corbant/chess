@@ -127,8 +127,8 @@ public class Server {
         });
 
         javalin.exception(DoesNotExistException.class, (e, ctx) -> {
-            String error = String.format(ERROR_MESSAGE_FORMAT, "not found");
-            ctx.status(404).json(new FailureResponse(error));
+            String error = String.format(ERROR_MESSAGE_FORMAT, "bad request");
+            ctx.status(400).json(new FailureResponse(error));
         });
 
         javalin.exception(UnauthorizedException.class, (e, ctx) -> {
