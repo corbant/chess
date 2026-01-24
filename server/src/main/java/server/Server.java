@@ -58,7 +58,7 @@ public class Server {
         userService = new UserService(userDAO, authDAO);
         gameService = new GameService(gameDAO, authDAO);
         dbService = new DBService(authDAO, userDAO, gameDAO);
-        gameplayService = new GameplayService(gameDAO);
+        gameplayService = new GameplayService(gameDAO, authDAO);
 
         // WS connection manager
         connectionManager = new WebsocketConnectionManager();
@@ -161,8 +161,9 @@ public class Server {
                     case CONNECT:
                         connectionManager.addSession(command.getGameID(), ctx);
                         ctx.sendAsClass(new LoadGameMessage(gameData.game()), LoadGameMessage.class);
-                        String joiningAs = gameData.whiteUsername().equals(authSession.username()) ? "white"
-                                : gameData.blackUsername().equals(authSession.username()) ? "black" : "observer";
+                        TeamColor userTeamColor = gameplayService.getUserTeamColor(authSession, gameData);
+                        String joiningAs = userTeamColor == TeamColor.WHITE ? "white"
+                                : userTeamColor == TeamColor.BLACK ? "black" : "observer";
                         connectionManager.broadcast(command.getGameID(),
                                 new NotificationMessage("join " + authSession.username() + " " + joiningAs), ctx);
                         break;
@@ -170,7 +171,7 @@ public class Server {
                         ChessGame updatedGame;
                         MakeMoveCommand moveCommand = ctx.messageAsClass(MakeMoveCommand.class);
                         try {
-                            updatedGame = gameplayService.makeMove(moveCommand, gameData);
+                            updatedGame = gameplayService.makeMove(moveCommand, gameData, authSession);
                         } catch (ServerErrorException e) {
                             ctx.sendAsClass(
                                     new ErrorMessage(String.format(ERROR_MESSAGE_FORMAT, "internal server error")),
@@ -179,6 +180,12 @@ public class Server {
                         } catch (InvalidMoveException e) {
                             ctx.sendAsClass(new ErrorMessage(String.format(ERROR_MESSAGE_FORMAT, "invalid move")),
                                     ErrorMessage.class);
+                            return;
+                        } catch (GameEndedException e) {
+                            ctx.sendAsClass(
+                                    new ErrorMessage(String.format(ERROR_MESSAGE_FORMAT,
+                                            "this game has ended, the result was " + gameData.result().toString())),
+                                    getClass());
                             return;
                         }
                         connectionManager.broadcastAll(gameData.gameID(), new LoadGameMessage(updatedGame));

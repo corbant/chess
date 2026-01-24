@@ -1,12 +1,15 @@
 package service;
 
 import chess.ChessGame;
+import chess.ChessMove;
+import chess.ChessGame.TeamColor;
 import chess.InvalidMoveException;
 import dataaccess.AuthDAO;
 import dataaccess.DataAccessException;
 import dataaccess.GameDAO;
 import model.AuthData;
 import model.GameData;
+import model.GameResult;
 import websocket.commands.MakeMoveCommand;
 import websocket.commands.UserGameCommand;
 
@@ -15,15 +18,31 @@ public class GameplayService {
     private GameDAO gameDAO;
     private AuthDAO authDAO;
 
-    public GameplayService(GameDAO gameDAO) {
+    public GameplayService(GameDAO gameDAO, AuthDAO authDAO) {
         this.gameDAO = gameDAO;
-        this.authDAO = authDAO;
     }
 
-    public ChessGame makeMove(MakeMoveCommand command, GameData gameData)
-            throws ServerErrorException, InvalidMoveException {
+    public ChessGame makeMove(MakeMoveCommand command, GameData gameData, AuthData authSession)
+            throws ServerErrorException, InvalidMoveException, GameEndedException {
+        if (gameData.result() != null) {
+            throw new GameEndedException("this game has ended");
+        }
         ChessGame game = gameData.game();
-        game.makeMove(command.getMove());
+        ChessMove move = command.getMove();
+        if (getUserTeamColor(authSession, gameData) != game.getTeamTurn()) {
+            throw new InvalidMoveException("Not your turn");
+        }
+        game.makeMove(move);
+        if (game.isInStalemate(TeamColor.WHITE)) {
+            gameData = new GameData(gameData.gameID(), gameData.whiteUsername(), gameData.blackUsername(),
+                    gameData.gameName(), game, GameResult.DRAW);
+        } else if (game.isInCheckmate(TeamColor.WHITE)) {
+            gameData = new GameData(gameData.gameID(), gameData.whiteUsername(), gameData.blackUsername(),
+                    gameData.gameName(), game, GameResult.BLACK);
+        } else if (game.isInCheckmate(TeamColor.BLACK)) {
+            gameData = new GameData(gameData.gameID(), gameData.whiteUsername(), gameData.blackUsername(),
+                    gameData.gameName(), game, GameResult.WHITE);
+        }
         try {
             gameDAO.updateGame(gameData);
         } catch (DataAccessException e) {
@@ -74,6 +93,14 @@ public class GameplayService {
             throw new UnauthorizedException("unauthorized");
         }
         return authSession;
+    }
+
+    public TeamColor getUserTeamColor(AuthData authSession, GameData gameData) {
+        String whiteUsername = gameData.whiteUsername();
+        String blackUsername = gameData.blackUsername();
+        String userUsername = authSession.username();
+        return whiteUsername.equals(userUsername) ? TeamColor.WHITE
+                : blackUsername.equals(userUsername) ? TeamColor.BLACK : null;
     }
 
 }
