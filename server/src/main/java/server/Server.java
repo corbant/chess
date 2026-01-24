@@ -17,6 +17,7 @@ import io.javalin.validation.ValidationException;
 import service.*;
 import service.request.*;
 import service.result.*;
+import websocket.commands.UserGameCommand;
 
 public class Server {
 
@@ -110,6 +111,17 @@ public class Server {
         javalin.delete("/db", ctx -> {
             dbService.clear();
             ctx.status(200);
+        });
+
+        javalin.ws("/ws", ws -> {
+            ws.onMessage(ctx -> {
+                UserGameCommand command = ctx.messageAsClass(null);
+                // validate
+                if (command.getAuthToken() == null || authDAO.getAuth(command.getAuthToken()) == null) {
+                    ctx.sendAsClass(, getClass());
+                }
+                command.getGameID()
+            });
         });
         // exception handlers
         addExceptionHandlers(javalin);
