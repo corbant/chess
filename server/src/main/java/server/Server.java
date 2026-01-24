@@ -167,6 +167,47 @@ public class Server {
                                 new NotificationMessage("join " + authSession.username() + " " + joiningAs), ctx);
                         break;
                     case MAKE_MOVE:
+                        ChessGame updatedGame;
+                        MakeMoveCommand moveCommand = ctx.messageAsClass(MakeMoveCommand.class);
+                        try {
+                            updatedGame = gameplayService.makeMove(moveCommand, gameData);
+                        } catch (ServerErrorException e) {
+                            ctx.sendAsClass(
+                                    new ErrorMessage(String.format(ERROR_MESSAGE_FORMAT, "internal server error")),
+                                    ErrorMessage.class);
+                            return;
+                        } catch (InvalidMoveException e) {
+                            ctx.sendAsClass(new ErrorMessage(String.format(ERROR_MESSAGE_FORMAT, "invalid move")),
+                                    ErrorMessage.class);
+                            return;
+                        }
+                        connectionManager.broadcastAll(gameData.gameID(), new LoadGameMessage(updatedGame));
+                        var move = moveCommand.getMove();
+                        String moveMessage = "move " + move.getStartPosition().toString() + " to "
+                                + move.getEndPosition().toString();
+                        if (move.getPromotionPiece() != null) {
+                            moveMessage += ", promoted to " + move.getPromotionPiece().toString();
+                        }
+                        connectionManager.broadcast(gameData.gameID(),
+                                new NotificationMessage(moveMessage),
+                                ctx);
+
+                        if (updatedGame.isInStalemate(TeamColor.WHITE)) {
+                            connectionManager.broadcastAll(gameData.gameID(),
+                                    new NotificationMessage("Stalemate detected"));
+                        } else if (updatedGame.isInCheckmate(TeamColor.WHITE)) {
+                            connectionManager.broadcastAll(gameData.gameID(),
+                                    new NotificationMessage("White is in checkmate"));
+                        } else if (updatedGame.isInCheckmate(TeamColor.BLACK)) {
+                            connectionManager.broadcastAll(gameData.gameID(),
+                                    new NotificationMessage("Black is in checkmate"));
+                        } else if (updatedGame.isInCheck(TeamColor.WHITE)) {
+                            connectionManager.broadcastAll(gameData.gameID(),
+                                    new NotificationMessage("White is in check"));
+                        } else if (updatedGame.isInCheck(TeamColor.BLACK)) {
+                            connectionManager.broadcastAll(gameData.gameID(),
+                                    new NotificationMessage("Black is in check"));
+                        }
                         break;
                     case LEAVE:
                         break;
