@@ -3,6 +3,7 @@ package server;
 import com.google.gson.Gson;
 
 import chess.ChessGame;
+import chess.InvalidMoveException;
 import chess.ChessGame.TeamColor;
 import dataaccess.AuthDAO;
 import dataaccess.DataAccessException;
@@ -15,6 +16,8 @@ import dataaccess.SQLUserDAO;
 import io.javalin.*;
 import io.javalin.json.JavalinGson;
 import io.javalin.validation.ValidationException;
+import model.AuthData;
+import model.GameData;
 import service.*;
 import service.request.*;
 import service.result.*;
@@ -22,6 +25,7 @@ import websocket.commands.MakeMoveCommand;
 import websocket.commands.UserGameCommand;
 import websocket.messages.ErrorMessage;
 import websocket.messages.LoadGameMessage;
+import websocket.messages.NotificationMessage;
 
 public class Server {
 
@@ -33,6 +37,8 @@ public class Server {
     private final AuthDAO authDAO;
     private final UserDAO userDAO;
     private final GameDAO gameDAO;
+
+    private final WebsocketConnectionManager connectionManager;
 
     private static final String ERROR_MESSAGE_FORMAT = "Error: %s";
 
@@ -53,6 +59,10 @@ public class Server {
         gameService = new GameService(gameDAO, authDAO);
         dbService = new DBService(authDAO, userDAO, gameDAO);
         gameplayService = new GameplayService(gameDAO);
+
+        // WS connection manager
+        connectionManager = new WebsocketConnectionManager();
+
         // web server
         javalin = Javalin.create(config -> {
             config.staticFiles.add("web");
@@ -126,34 +136,42 @@ public class Server {
             });
 
             ws.onMessage(ctx -> {
-                UserGameCommand command = ctx.messageAsClass(null);
+                UserGameCommand command = ctx.messageAsClass(UserGameCommand.class);
+                AuthData authSession;
+                GameData gameData;
                 // validate
-                if (command.getAuthToken() == null || authDAO.getAuth(command.getAuthToken()) == null) {
-                    ctx.sendAsClass(new ErrorMessage(String.format(ERROR_MESSAGE_FORMAT, "invalid authToken")),
+                try {
+                    authSession = gameplayService.validateAuthSession(command);
+                    gameData = gameplayService.getGameData(command);
+                } catch (UnauthorizedException e) {
+                    ctx.sendAsClass(new ErrorMessage(String.format(ERROR_MESSAGE_FORMAT, "unauthorized")),
+                            ErrorMessage.class);
+                    return;
+                } catch (DoesNotExistException e) {
+                    ctx.sendAsClass(new ErrorMessage(String.format(ERROR_MESSAGE_FORMAT, "game does not exist")),
+                            ErrorMessage.class);
+                    return;
+                } catch (ServerErrorException e) {
+                    ctx.sendAsClass(new ErrorMessage(String.format(ERROR_MESSAGE_FORMAT, "internal server error")),
                             ErrorMessage.class);
                     return;
                 }
-                if (command.getGameID() == 0 || gameDAO.getGame(command.getGameID()) == null) {
-                    ctx.sendAsClass(new ErrorMessage(String.format(ERROR_MESSAGE_FORMAT, "invalid gameID")),
-                            ErrorMessage.class);
-                }
 
-                ChessGame game = null;
                 switch (command.getCommandType()) {
                     case CONNECT:
-                        game = gameplayService.getChessGame(command.getGameID());
+                        connectionManager.addSession(command.getGameID(), ctx);
+                        ctx.sendAsClass(new LoadGameMessage(gameData.game()), LoadGameMessage.class);
+                        String joiningAs = gameData.whiteUsername().equals(authSession.username()) ? "white"
+                                : gameData.blackUsername().equals(authSession.username()) ? "black" : "observer";
+                        connectionManager.broadcast(command.getGameID(),
+                                new NotificationMessage("join " + authSession.username() + " " + joiningAs), ctx);
                         break;
                     case MAKE_MOVE:
-                        game = gameplayService.makeMove((MakeMoveCommand) command);
                         break;
                     case LEAVE:
                         break;
                     case RESIGN:
                         break;
-                }
-
-                if (game != null) {
-                    ctx.sendAsClass(new LoadGameMessage(game), getClass());
                 }
             });
         });
