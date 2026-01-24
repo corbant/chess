@@ -13,6 +13,8 @@ import ui.StreamPrinter;
 public class Client {
     private boolean isLoggedIn = false;
     private String authToken = null;
+    private boolean isPlayingGame = false;
+    private int gameID = 0;
     private ServerFacade server;
     private ChessBoardPrinter printer;
 
@@ -87,14 +89,19 @@ public class Client {
                             new CommandArgument("to", String.class, true),
                             new CommandArgument("promotion", Character.class, false)),
                     (commandArgs) -> {
-
+                        String from = (String) commandArgs[0];
+                        String to = (String) commandArgs[1];
+                        char pieceType;
+                        if (commandArgs[2] != null) {
+                            pieceType = (Character) commandArgs[2];
+                        }
                     }),
             new Command("resign", "the game", null, (commandArgs) -> {
 
             }),
-            new Command("moves", "show all legal moves for piece",
+            new Command("highlight", "all legal moves for piece",
                     List.of(new CommandArgument("piece", String.class, true)), (commandArgs) -> {
-
+                        String pieceLocation = (String) commandArgs[0];
                     }),
             new Command("help", "with possible commands", null, (commandArgs) -> {
                 listCommands(printer, getAvailableCommands());
@@ -236,6 +243,9 @@ public class Client {
         printer.newline();
         printer.drawBoard(new ChessGame().getBoard(), color == TeamColor.BLACK);
         printer.newline();
+
+        isPlayingGame = true;
+        this.gameID = gameID;
     }
 
     private void observeGame(int gameID) {
@@ -273,7 +283,7 @@ public class Client {
     }
 
     public List<Command> getAvailableCommands() {
-        return isLoggedIn ? loggedInCommands : loggedOutCommands;
+        return isLoggedIn ? isPlayingGame ? gameplayCommands : loggedInCommands : loggedOutCommands;
     }
 
     public void listCommands(StreamPrinter printer, List<Command> commands) {
@@ -365,6 +375,8 @@ public class Client {
 
         if (type == String.class) {
             return scanner.next();
+        } else if (type == Character.class) {
+            return scanner.next().charAt(0);
         } else if (type == Integer.class) {
             if (!scanner.hasNextInt()) {
                 throw new InvalidCommandException("Invalid Argument " + arg.name());
