@@ -2,6 +2,7 @@ package server;
 
 import com.google.gson.Gson;
 
+import chess.ChessGame;
 import chess.ChessGame.TeamColor;
 import dataaccess.AuthDAO;
 import dataaccess.DataAccessException;
@@ -17,7 +18,10 @@ import io.javalin.validation.ValidationException;
 import service.*;
 import service.request.*;
 import service.result.*;
+import websocket.commands.MakeMoveCommand;
 import websocket.commands.UserGameCommand;
+import websocket.messages.ErrorMessage;
+import websocket.messages.LoadGameMessage;
 
 public class Server {
 
@@ -25,6 +29,7 @@ public class Server {
     private final UserService userService;
     private final GameService gameService;
     private final DBService dbService;
+    private final GameplayService gameplayService;
     private final AuthDAO authDAO;
     private final UserDAO userDAO;
     private final GameDAO gameDAO;
@@ -47,6 +52,7 @@ public class Server {
         userService = new UserService(userDAO, authDAO);
         gameService = new GameService(gameDAO, authDAO);
         dbService = new DBService(authDAO, userDAO, gameDAO);
+        gameplayService = new GameplayService(gameDAO);
         // web server
         javalin = Javalin.create(config -> {
             config.staticFiles.add("web");
@@ -114,13 +120,41 @@ public class Server {
         });
 
         javalin.ws("/ws", ws -> {
+
+            ws.onConnect(ctx -> {
+                ctx.enableAutomaticPings();
+            });
+
             ws.onMessage(ctx -> {
                 UserGameCommand command = ctx.messageAsClass(null);
                 // validate
                 if (command.getAuthToken() == null || authDAO.getAuth(command.getAuthToken()) == null) {
-                    ctx.sendAsClass(, getClass());
+                    ctx.sendAsClass(new ErrorMessage(String.format(ERROR_MESSAGE_FORMAT, "invalid authToken")),
+                            ErrorMessage.class);
+                    return;
                 }
-                command.getGameID()
+                if (command.getGameID() == 0 || gameDAO.getGame(command.getGameID()) == null) {
+                    ctx.sendAsClass(new ErrorMessage(String.format(ERROR_MESSAGE_FORMAT, "invalid gameID")),
+                            ErrorMessage.class);
+                }
+
+                ChessGame game = null;
+                switch (command.getCommandType()) {
+                    case CONNECT:
+                        game = gameplayService.getChessGame(command.getGameID());
+                        break;
+                    case MAKE_MOVE:
+                        game = gameplayService.makeMove((MakeMoveCommand) command);
+                        break;
+                    case LEAVE:
+                        break;
+                    case RESIGN:
+                        break;
+                }
+
+                if (game != null) {
+                    ctx.sendAsClass(new LoadGameMessage(game), getClass());
+                }
             });
         });
         // exception handlers
