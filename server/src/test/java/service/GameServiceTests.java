@@ -49,14 +49,14 @@ public class GameServiceTests {
     @Test
     public void listGamesSuccess() {
         try {
-            int id1 = gameDAO.createGame(new GameData(0, "username", "username", "game 1", new ChessGame()));
-            int id2 = gameDAO.createGame(new GameData(0, "username", "username", "game 2", new ChessGame()));
-            int id3 = gameDAO.createGame(new GameData(0, "username", "username", "game 3", new ChessGame()));
+            int id1 = gameDAO.createGame(new GameData(0, "username", "username", "game 1", new ChessGame(), null));
+            int id2 = gameDAO.createGame(new GameData(0, "username", "username", "game 2", new ChessGame(), null));
+            int id3 = gameDAO.createGame(new GameData(0, "username", "username", "game 3", new ChessGame(), null));
 
             GameData[] expected = new GameData[] {
-                    new GameData(id1, "username", "username", "game 1", new ChessGame()),
-                    new GameData(id2, "username", "username", "game 2", new ChessGame()),
-                    new GameData(id3, "username", "username", "game 3", new ChessGame())
+                    new GameData(id1, "username", "username", "game 1", new ChessGame(), null),
+                    new GameData(id2, "username", "username", "game 2", new ChessGame(), null),
+                    new GameData(id3, "username", "username", "game 3", new ChessGame(), null)
             };
 
             Assertions.assertArrayEquals(expected, gameService.list().games());
@@ -96,7 +96,7 @@ public class GameServiceTests {
     @Test
     public void joinGameSuccess() {
         try {
-            int gameID = gameDAO.createGame(new GameData(0, null, null, "test game", new ChessGame()));
+            int gameID = gameDAO.createGame(new GameData(0, null, null, "test game", new ChessGame(), null));
             AuthData authSession = new AuthData(UUID.randomUUID().toString(), "testuser");
             authDAO.createAuth(authSession);
             gameService.join(new GameJoinRequest("WHITE", gameID), authSession.authToken());
@@ -108,7 +108,7 @@ public class GameServiceTests {
     @Test
     public void joinGameFailure() {
         try {
-            int gameID = gameDAO.createGame(new GameData(0, "whiteuser", null, "test game", new ChessGame()));
+            int gameID = gameDAO.createGame(new GameData(0, "whiteuser", null, "test game", new ChessGame(), null));
             AuthData authSession = new AuthData(UUID.randomUUID().toString(), "testuser");
             authDAO.createAuth(authSession);
             Assertions.assertThrows(AlreadyTakenException.class, () -> {

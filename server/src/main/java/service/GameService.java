@@ -41,14 +41,14 @@ public class GameService {
                     throw new AlreadyTakenException("playerColor is already taken");
                 }
                 updatedGameData = new GameData(gameData.gameID(), playerUsername, gameData.blackUsername(),
-                        gameData.gameName(), gameData.game());
+                        gameData.gameName(), gameData.game(), gameData.result());
 
             } else {
                 if (gameData.blackUsername() != null) {
                     throw new AlreadyTakenException("playerColor is already taken");
                 }
                 updatedGameData = new GameData(gameData.gameID(), gameData.whiteUsername(), playerUsername,
-                        gameData.gameName(), gameData.game());
+                        gameData.gameName(), gameData.game(), gameData.result());
             }
 
             gameDAO.updateGame(updatedGameData);
@@ -60,7 +60,7 @@ public class GameService {
     public GameCreateResponse create(GameCreateRequest gameCreateRequest) throws ServerErrorException {
         try {
 
-            GameData gameData = new GameData(0, null, null, gameCreateRequest.gameName(), new ChessGame());
+            GameData gameData = new GameData(0, null, null, gameCreateRequest.gameName(), new ChessGame(), null);
             int gameID = gameDAO.createGame(gameData);
             return new GameCreateResponse(gameID);
         } catch (DataAccessException ex) {

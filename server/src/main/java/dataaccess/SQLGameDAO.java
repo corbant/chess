@@ -10,6 +10,7 @@ import com.google.gson.Gson;
 
 import chess.ChessGame;
 import model.GameData;
+import model.GameResult;
 
 public class SQLGameDAO extends AbstractSQLDAO implements GameDAO {
 
@@ -20,7 +21,8 @@ public class SQLGameDAO extends AbstractSQLDAO implements GameDAO {
                     `white` VARCHAR(256) DEFAULT NULL,
                     `black` VARCHAR(256) DEFAULT NULL,
                     `name` VARCHAR(256) NOT NULL,
-                    `game` TEXT NOT NULL
+                    `game` TEXT NOT NULL,
+                    `result` VARCHAR(10) DEFAULT NULL
                     )
                             """
     };
@@ -35,12 +37,13 @@ public class SQLGameDAO extends AbstractSQLDAO implements GameDAO {
     public int createGame(GameData gameData) throws DataAccessException {
         try (Connection conn = DatabaseManager.getConnection()) {
             try (var preparedStatement = conn.prepareStatement(
-                    "INSERT INTO game (white, black, name, game) VALUES(?, ?, ?, ?)",
+                    "INSERT INTO game (white, black, name, game, result) VALUES(?, ?, ?, ?, ?)",
                     Statement.RETURN_GENERATED_KEYS)) {
                 preparedStatement.setString(1, gameData.whiteUsername());
                 preparedStatement.setString(2, gameData.blackUsername());
                 preparedStatement.setString(3, gameData.gameName());
                 preparedStatement.setString(4, GSON.toJson(gameData.game()));
+                preparedStatement.setString(5, gameData.result() != null ? gameData.result().toString() : null);
 
                 preparedStatement.executeUpdate();
 
@@ -61,14 +64,17 @@ public class SQLGameDAO extends AbstractSQLDAO implements GameDAO {
     public GameData getGame(int gameID) throws DataAccessException {
         try (Connection conn = DatabaseManager.getConnection()) {
             try (var preparedStatement = conn
-                    .prepareStatement("SELECT id, white, black, name, game FROM game WHERE id=?")) {
+                    .prepareStatement("SELECT id, white, black, name, game, result FROM game WHERE id=?")) {
                 preparedStatement.setInt(1, gameID);
 
                 try (var resultSet = preparedStatement.executeQuery()) {
                     if (resultSet.next()) {
+                        String gameResultValue = resultSet.getString("result");
+                        GameResult gameResult = gameResultValue != null ? GameResult.valueOf(gameResultValue) : null;
                         return new GameData(resultSet.getInt("id"), resultSet.getString("white"),
                                 resultSet.getString("black"), resultSet.getString("name"), GSON.fromJson(
-                                        resultSet.getString("game"), ChessGame.class));
+                                        resultSet.getString("game"), ChessGame.class),
+                                gameResult);
                     }
                 }
             }
@@ -84,13 +90,16 @@ public class SQLGameDAO extends AbstractSQLDAO implements GameDAO {
         Collection<GameData> games = new ArrayList<>();
         try (Connection conn = DatabaseManager.getConnection()) {
             try (var preparedStatement = conn
-                    .prepareStatement("SELECT id, white, black, name, game FROM game")) {
+                    .prepareStatement("SELECT id, white, black, name, game, result FROM game")) {
 
                 try (var resultSet = preparedStatement.executeQuery()) {
                     while (resultSet.next()) {
+                        String gameResultValue = resultSet.getString("result");
+                        GameResult gameResult = gameResultValue != null ? GameResult.valueOf(gameResultValue) : null;
                         games.add(new GameData(resultSet.getInt("id"), resultSet.getString("white"),
                                 resultSet.getString("black"), resultSet.getString("name"), GSON.fromJson(
-                                        resultSet.getString("game"), ChessGame.class)));
+                                        resultSet.getString("game"), ChessGame.class),
+                                gameResult));
                     }
                 }
             }
@@ -105,12 +114,14 @@ public class SQLGameDAO extends AbstractSQLDAO implements GameDAO {
     public void updateGame(GameData updatedGameData) throws DataAccessException {
         try (Connection conn = DatabaseManager.getConnection()) {
             try (var preparedStatement = conn.prepareStatement(
-                    "UPDATE game SET white=?, black=?, name=?, game=? WHERE id=?")) {
+                    "UPDATE game SET white=?, black=?, name=?, game=?, result=? WHERE id=?")) {
                 preparedStatement.setString(1, updatedGameData.whiteUsername());
                 preparedStatement.setString(2, updatedGameData.blackUsername());
                 preparedStatement.setString(3, updatedGameData.gameName());
                 preparedStatement.setString(4, GSON.toJson(updatedGameData.game()));
-                preparedStatement.setInt(5, updatedGameData.gameID());
+                preparedStatement.setString(5,
+                        updatedGameData.result() != null ? updatedGameData.result().toString() : null);
+                preparedStatement.setInt(6, updatedGameData.gameID());
 
                 int updated = preparedStatement.executeUpdate();
                 if (updated == 0) {

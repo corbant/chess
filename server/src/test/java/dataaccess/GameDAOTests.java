@@ -28,12 +28,13 @@ public class GameDAOTests {
 
     @Test
     public void createGameSuccess() {
-        GameData game = new GameData(0, null, null, "game", new ChessGame());
+        GameData game = new GameData(0, null, null, "game", new ChessGame(), null);
 
         try {
             int gameID = gameDAO.createGame(game);
 
-            game = new GameData(gameID, game.whiteUsername(), game.blackUsername(), game.gameName(), game.game());
+            game = new GameData(gameID, game.whiteUsername(), game.blackUsername(), game.gameName(), game.game(),
+                    game.result());
 
             GameData dbGame = gameDAO.getGame(gameID);
 
@@ -47,20 +48,22 @@ public class GameDAOTests {
     @Test
     public void createGameFailure() {
         // game name can't be null
-        GameData invalidGame = new GameData(0, null, null, null, new ChessGame());
+        GameData invalidGame = new GameData(0, null, null, null, new ChessGame(), null);
         Assertions.assertThrows(DataAccessException.class, () -> gameDAO.createGame(invalidGame));
     }
 
     @Test
     public void getGameSuccess() {
-        GameData game1 = new GameData(0, "white1", "black1", "firstgame", new ChessGame());
-        GameData game2 = new GameData(0, "white2", "black2", "firstgame", new ChessGame());
+        GameData game1 = new GameData(0, "white1", "black1", "firstgame", new ChessGame(), null);
+        GameData game2 = new GameData(0, "white2", "black2", "firstgame", new ChessGame(), null);
         try {
             int gameID1 = gameDAO.createGame(game1);
             int gameID2 = gameDAO.createGame(game2);
 
-            game1 = new GameData(gameID1, game1.whiteUsername(), game1.blackUsername(), game1.gameName(), game1.game());
-            game2 = new GameData(gameID2, game2.whiteUsername(), game2.blackUsername(), game2.gameName(), game2.game());
+            game1 = new GameData(gameID1, game1.whiteUsername(), game1.blackUsername(), game1.gameName(), game1.game(),
+                    game1.result());
+            game2 = new GameData(gameID2, game2.whiteUsername(), game2.blackUsername(), game2.gameName(), game2.game(),
+                    game2.result());
 
             GameData dbGame1 = gameDAO.getGame(gameID1);
             GameData dbGame2 = gameDAO.getGame(gameID2);
@@ -77,7 +80,7 @@ public class GameDAOTests {
 
     @Test
     public void getGameFailure() {
-        GameData game = new GameData(0, null, null, "game", new ChessGame());
+        GameData game = new GameData(0, null, null, "game", new ChessGame(), null);
 
         try {
             gameDAO.createGame(game);
@@ -91,16 +94,16 @@ public class GameDAOTests {
     @Test
     public void listGamesSuccess() {
         GameData[] games = {
-                new GameData(0, "white1", "black1", "firstgame", new ChessGame()),
-                new GameData(0, "white2", "black2", "firstgame", new ChessGame()),
-                new GameData(0, "white3", "black3", "firstgame", new ChessGame())
+                new GameData(0, "white1", "black1", "firstgame", new ChessGame(), null),
+                new GameData(0, "white2", "black2", "firstgame", new ChessGame(), null),
+                new GameData(0, "white3", "black3", "firstgame", new ChessGame(), null)
         };
 
         try {
             for (int i = 0; i < games.length; i++) {
                 int gameID = gameDAO.createGame(games[i]);
                 games[i] = new GameData(gameID, games[i].whiteUsername(), games[i].blackUsername(), games[i].gameName(),
-                        games[i].game());
+                        games[i].game(), games[i].result());
             }
 
             var dbGames = gameDAO.listGames();
@@ -125,11 +128,12 @@ public class GameDAOTests {
     @Test
     public void updateGameSuccess() {
         ChessGame gameState = new ChessGame();
-        GameData game = new GameData(0, null, null, "game", gameState);
+        GameData game = new GameData(0, null, null, "game", gameState, null);
 
         try {
             int gameID = gameDAO.createGame(game);
-            GameData updatedGame = new GameData(gameID, "username", game.blackUsername(), game.gameName(), game.game());
+            GameData updatedGame = new GameData(gameID, "username", game.blackUsername(), game.gameName(), game.game(),
+                    game.result());
 
             gameDAO.updateGame(updatedGame);
 
@@ -147,7 +151,7 @@ public class GameDAOTests {
             Assertions.assertNotEquals(gameState, dbUpdatedGame.game());
 
             GameData gameWithChessMove = new GameData(gameID, updatedGame.whiteUsername(), updatedGame.blackUsername(),
-                    updatedGame.gameName(), gameState);
+                    updatedGame.gameName(), gameState, updatedGame.result());
             gameDAO.updateGame(gameWithChessMove);
 
             GameData dbGameWithChessMove = gameDAO.getGame(gameID);
@@ -159,7 +163,7 @@ public class GameDAOTests {
 
     @Test
     public void updateGameFailure() {
-        GameData gameToUpdate = new GameData(-1, null, null, "game", new ChessGame());
+        GameData gameToUpdate = new GameData(-1, null, null, "game", new ChessGame(), null);
 
         Assertions.assertThrows(DataAccessException.class, () -> gameDAO.updateGame(gameToUpdate));
 
@@ -168,7 +172,7 @@ public class GameDAOTests {
 
             GameData updatedGame = new GameData(gameID, gameToUpdate.whiteUsername(), gameToUpdate.blackUsername(),
                     null,
-                    gameToUpdate.game());
+                    gameToUpdate.game(), gameToUpdate.result());
             Assertions.assertThrows(DataAccessException.class, () -> gameDAO.updateGame(updatedGame));
         } catch (DataAccessException e) {
             Assertions.fail(e);
@@ -178,9 +182,9 @@ public class GameDAOTests {
     @Test
     public void clear() {
         GameData[] games = {
-                new GameData(0, "white1", "black1", "firstgame", new ChessGame()),
-                new GameData(0, "white2", "black2", "firstgame", new ChessGame()),
-                new GameData(0, "white3", "black3", "firstgame", new ChessGame())
+                new GameData(0, "white1", "black1", "firstgame", new ChessGame(), null),
+                new GameData(0, "white2", "black2", "firstgame", new ChessGame(), null),
+                new GameData(0, "white3", "black3", "firstgame", new ChessGame(), null)
         };
 
         try {
