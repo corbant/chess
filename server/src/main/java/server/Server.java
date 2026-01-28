@@ -2,8 +2,6 @@ package server;
 
 import com.google.gson.Gson;
 
-import chess.ChessGame;
-import chess.InvalidMoveException;
 import chess.ChessGame.TeamColor;
 import dataaccess.AuthDAO;
 import dataaccess.DataAccessException;
@@ -16,8 +14,6 @@ import dataaccess.SQLUserDAO;
 import io.javalin.*;
 import io.javalin.json.JavalinGson;
 import io.javalin.validation.ValidationException;
-import model.AuthData;
-import model.GameData;
 import service.*;
 import service.request.*;
 import service.result.*;
@@ -27,8 +23,6 @@ import websocket.commands.MakeMoveCommand;
 import websocket.commands.ResignCommand;
 import websocket.commands.UserGameCommand;
 import websocket.messages.ErrorMessage;
-import websocket.messages.LoadGameMessage;
-import websocket.messages.NotificationMessage;
 
 public class Server {
 

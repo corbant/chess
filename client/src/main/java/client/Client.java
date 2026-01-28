@@ -240,7 +240,6 @@ public class Client {
             return;
         }
         printer.newline();
-        printer.drawBoard(new ChessGame().getBoard(), color == TeamColor.BLACK);
         printer.newline();
 
         isPlayingGame = true;
