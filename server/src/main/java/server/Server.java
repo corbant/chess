@@ -21,6 +21,7 @@ import model.GameData;
 import service.*;
 import service.request.*;
 import service.result.*;
+import websocket.commands.ConnectCommand;
 import websocket.commands.MakeMoveCommand;
 import websocket.commands.UserGameCommand;
 import websocket.messages.ErrorMessage;
@@ -137,89 +138,54 @@ public class Server {
 
             ws.onMessage(ctx -> {
                 UserGameCommand command = ctx.messageAsClass(UserGameCommand.class);
-                AuthData authSession;
-                GameData gameData;
                 // validate
-                try {
-                    authSession = gameplayService.validateAuthSession(command);
-                    gameData = gameplayService.getGameData(command);
-                } catch (UnauthorizedException e) {
-                    ctx.sendAsClass(new ErrorMessage(String.format(ERROR_MESSAGE_FORMAT, "unauthorized")),
-                            ErrorMessage.class);
-                    return;
-                } catch (DoesNotExistException e) {
-                    ctx.sendAsClass(new ErrorMessage(String.format(ERROR_MESSAGE_FORMAT, "game does not exist")),
-                            ErrorMessage.class);
-                    return;
-                } catch (ServerErrorException e) {
-                    ctx.sendAsClass(new ErrorMessage(String.format(ERROR_MESSAGE_FORMAT, "internal server error")),
-                            ErrorMessage.class);
-                    return;
-                }
-
+                // catch (UnauthorizedException e) {
+                // ctx.sendAsClass(new ErrorMessage(String.format(ERROR_MESSAGE_FORMAT,
+                // "unauthorized")),
+                // ErrorMessage.class);
+                // return;
+                // } catch (DoesNotExistException e) {
+                // ctx.sendAsClass(new ErrorMessage(String.format(ERROR_MESSAGE_FORMAT, "game
+                // does not exist")),
+                // ErrorMessage.class);
+                // return;
+                // } catch (ServerErrorException e) {
+                // ctx.sendAsClass(new ErrorMessage(String.format(ERROR_MESSAGE_FORMAT,
+                // "internal server error")),
+                // ErrorMessage.class);
+                // return;
+                // }
+                CommandResult commandResult = null;
                 switch (command.getCommandType()) {
                     case CONNECT:
+                        commandResult = gameplayService.connect((ConnectCommand) command);
                         connectionManager.addSession(command.getGameID(), ctx);
-                        ctx.sendAsClass(new LoadGameMessage(gameData.game()), LoadGameMessage.class);
-                        TeamColor userTeamColor = gameplayService.getUserTeamColor(authSession, gameData);
-                        String joiningAs = userTeamColor == TeamColor.WHITE ? "white"
-                                : userTeamColor == TeamColor.BLACK ? "black" : "observer";
-                        connectionManager.broadcast(command.getGameID(),
-                                new NotificationMessage("join " + authSession.username() + " " + joiningAs), ctx);
                         break;
                     case MAKE_MOVE:
-                        ChessGame updatedGame;
                         MakeMoveCommand moveCommand = ctx.messageAsClass(MakeMoveCommand.class);
                         try {
-                            updatedGame = gameplayService.makeMove(moveCommand, gameData, authSession);
+                            commandResult = gameplayService.makeMove(moveCommand);
                         } catch (ServerErrorException e) {
                             ctx.sendAsClass(
                                     new ErrorMessage(String.format(ERROR_MESSAGE_FORMAT, "internal server error")),
                                     ErrorMessage.class);
                             return;
-                        } catch (InvalidMoveException e) {
-                            ctx.sendAsClass(new ErrorMessage(String.format(ERROR_MESSAGE_FORMAT, "invalid move")),
-                                    ErrorMessage.class);
-                            return;
-                        } catch (GameEndedException e) {
-                            ctx.sendAsClass(
-                                    new ErrorMessage(String.format(ERROR_MESSAGE_FORMAT,
-                                            "this game has ended, the result was " + gameData.result().toString())),
-                                    getClass());
-                            return;
-                        }
-                        connectionManager.broadcastAll(gameData.gameID(), new LoadGameMessage(updatedGame));
-                        var move = moveCommand.getMove();
-                        String moveMessage = "move " + move.getStartPosition().toString() + " to "
-                                + move.getEndPosition().toString();
-                        if (move.getPromotionPiece() != null) {
-                            moveMessage += ", promoted to " + move.getPromotionPiece().toString();
-                        }
-                        connectionManager.broadcast(gameData.gameID(),
-                                new NotificationMessage(moveMessage),
-                                ctx);
-
-                        if (updatedGame.isInStalemate(TeamColor.WHITE)) {
-                            connectionManager.broadcastAll(gameData.gameID(),
-                                    new NotificationMessage("Stalemate detected"));
-                        } else if (updatedGame.isInCheckmate(TeamColor.WHITE)) {
-                            connectionManager.broadcastAll(gameData.gameID(),
-                                    new NotificationMessage("White is in checkmate"));
-                        } else if (updatedGame.isInCheckmate(TeamColor.BLACK)) {
-                            connectionManager.broadcastAll(gameData.gameID(),
-                                    new NotificationMessage("Black is in checkmate"));
-                        } else if (updatedGame.isInCheck(TeamColor.WHITE)) {
-                            connectionManager.broadcastAll(gameData.gameID(),
-                                    new NotificationMessage("White is in check"));
-                        } else if (updatedGame.isInCheck(TeamColor.BLACK)) {
-                            connectionManager.broadcastAll(gameData.gameID(),
-                                    new NotificationMessage("Black is in check"));
                         }
                         break;
                     case LEAVE:
                         break;
                     case RESIGN:
                         break;
+                }
+
+                if (commandResult != null) {
+                    for (var outbound : commandResult.outbound()) {
+                        switch (outbound.target()) {
+                            case SELF -> ctx.sendAsClass(outbound.payload(), outbound.payload().getClass());
+                            case OTHERS -> connectionManager.broadcast(commandResult.gameID(), outbound.payload(), ctx);
+                            case ALL -> connectionManager.broadcastAll(commandResult.gameID(), outbound.payload());
+                        }
+                    }
                 }
             });
         });

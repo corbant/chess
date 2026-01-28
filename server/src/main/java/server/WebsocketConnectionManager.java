@@ -23,18 +23,18 @@ public class WebsocketConnectionManager {
         }
     }
 
-    public void broadcast(int gameID, ServerMessage message, WsContext exclude) {
+    public void broadcast(int gameID, Object message, WsContext exclude) {
         var sessions = connections.get(gameID);
         if (sessions != null) {
             for (var session : sessions) {
                 if (session != exclude && session.session.isOpen()) {
-                    session.sendAsClass(message, ServerMessage.class);
+                    session.sendAsClass(message, message.getClass());
                 }
             }
         }
     }
 
-    public void broadcastAll(int gameID, ServerMessage message) {
+    public void broadcastAll(int gameID, Object message) {
         broadcast(gameID, message, null);
     }
 
