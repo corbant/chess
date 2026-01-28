@@ -216,8 +216,12 @@ public class GameplayService {
         String whiteUsername = gameData.whiteUsername();
         String blackUsername = gameData.blackUsername();
         String userUsername = authSession.username();
-        return whiteUsername.equals(userUsername) ? TeamColor.WHITE
-                : blackUsername.equals(userUsername) ? TeamColor.BLACK : null;
+        if (whiteUsername != null && whiteUsername.equals(userUsername)) {
+            return TeamColor.WHITE;
+        } else if (blackUsername != null && blackUsername.equals(userUsername)) {
+            return TeamColor.BLACK;
+        }
+        return null;
     }
 
 }
