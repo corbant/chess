@@ -22,7 +22,9 @@ import service.*;
 import service.request.*;
 import service.result.*;
 import websocket.commands.ConnectCommand;
+import websocket.commands.LeaveCommand;
 import websocket.commands.MakeMoveCommand;
+import websocket.commands.ResignCommand;
 import websocket.commands.UserGameCommand;
 import websocket.messages.ErrorMessage;
 import websocket.messages.LoadGameMessage;
@@ -156,26 +158,40 @@ public class Server {
                 // return;
                 // }
                 CommandResult commandResult = null;
-                switch (command.getCommandType()) {
-                    case CONNECT:
-                        commandResult = gameplayService.connect((ConnectCommand) command);
-                        connectionManager.addSession(command.getGameID(), ctx);
-                        break;
-                    case MAKE_MOVE:
-                        MakeMoveCommand moveCommand = ctx.messageAsClass(MakeMoveCommand.class);
-                        try {
-                            commandResult = gameplayService.makeMove(moveCommand);
-                        } catch (ServerErrorException e) {
-                            ctx.sendAsClass(
-                                    new ErrorMessage(String.format(ERROR_MESSAGE_FORMAT, "internal server error")),
-                                    ErrorMessage.class);
-                            return;
-                        }
-                        break;
-                    case LEAVE:
-                        break;
-                    case RESIGN:
-                        break;
+                try {
+                    switch (command.getCommandType()) {
+                        case CONNECT:
+                            commandResult = gameplayService.connect((ConnectCommand) command);
+                            connectionManager.addSession(command.getGameID(), ctx);
+                            break;
+                        case MAKE_MOVE:
+                            MakeMoveCommand moveCommand = ctx.messageAsClass(MakeMoveCommand.class);
+                            try {
+                                commandResult = gameplayService.makeMove(moveCommand);
+                            } catch (ServerErrorException e) {
+                                ctx.sendAsClass(
+                                        new ErrorMessage(String.format(ERROR_MESSAGE_FORMAT, "internal server error")),
+                                        ErrorMessage.class);
+                                return;
+                            }
+                            break;
+                        case LEAVE:
+                            commandResult = gameplayService.leaveGame((LeaveCommand) command);
+                            connectionManager.removeSession(command.getGameID(), ctx);
+                            break;
+                        case RESIGN:
+                            commandResult = gameplayService.resign((ResignCommand) command);
+                            break;
+                    }
+                } catch (UnauthorizedException e) {
+                    ctx.sendAsClass(new ErrorMessage(String.format(ERROR_MESSAGE_FORMAT, "unauthorized")), getClass());
+                } catch (DoesNotExistException e) {
+                    ctx.sendAsClass(new ErrorMessage(String.format(ERROR_MESSAGE_FORMAT, "game not found")),
+                            getClass());
+                } catch (ServerErrorException e) {
+                    ctx.sendAsClass(
+                            new ErrorMessage(String.format(ERROR_MESSAGE_FORMAT, "server error, please try again")),
+                            getClass());
                 }
 
                 if (commandResult != null) {

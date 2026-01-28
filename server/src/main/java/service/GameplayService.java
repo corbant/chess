@@ -85,21 +85,21 @@ public class GameplayService {
         if (gameResult != null) {
             switch (gameResult) {
                 case DRAW:
-                    checkMessage = new OutboundWSMessage(Target.ALL, new NotificationMessage("Stalemate detected"));
+                    checkMessage = new OutboundWSMessage(Target.ALL, new NotificationMessage("stalemate detected"));
                     break;
                 case BLACK:
-                    checkMessage = new OutboundWSMessage(Target.ALL, new NotificationMessage("Black wins!"));
+                    checkMessage = new OutboundWSMessage(Target.ALL, new NotificationMessage("black wins!"));
                     break;
                 case WHITE:
-                    checkMessage = new OutboundWSMessage(Target.ALL, new NotificationMessage("White wins!"));
+                    checkMessage = new OutboundWSMessage(Target.ALL, new NotificationMessage("white wins!"));
                     break;
             }
         } else if (inCheck != null) {
             switch (inCheck) {
                 case WHITE:
-                    checkMessage = new OutboundWSMessage(Target.ALL, new NotificationMessage("White is in check"));
+                    checkMessage = new OutboundWSMessage(Target.ALL, new NotificationMessage("white is in check"));
                 case BLACK:
-                    checkMessage = new OutboundWSMessage(Target.ALL, new NotificationMessage("Black is in check"));
+                    checkMessage = new OutboundWSMessage(Target.ALL, new NotificationMessage("black is in check"));
             }
         }
         return new CommandResult(gameData.gameID(),
@@ -148,6 +148,37 @@ public class GameplayService {
 
         return new CommandResult(gameData.gameID(),
                 List.of(new OutboundWSMessage(Target.OTHERS, "leave " + authSession.username())));
+    }
+
+    public CommandResult resign(ResignCommand command)
+            throws UnauthorizedException, DoesNotExistException, ServerErrorException {
+        AuthData authSession = validateAuthSession(command);
+        GameData gameData = getGameData(command);
+
+        TeamColor teamColor = getUserTeamColor(authSession, gameData);
+        if (teamColor != null) {
+            GameData updatedGameData;
+            if (teamColor == TeamColor.WHITE) {
+                updatedGameData = new GameData(gameData.gameID(), gameData.whiteUsername(), gameData.blackUsername(),
+                        gameData.gameName(),
+                        gameData.game(), GameResult.BLACK);
+            } else {
+                updatedGameData = new GameData(gameData.gameID(), gameData.whiteUsername(), gameData.blackUsername(),
+                        gameData.gameName(),
+                        gameData.game(), GameResult.WHITE);
+            }
+            try {
+                gameDAO.updateGame(updatedGameData);
+            } catch (DataAccessException e) {
+                throw new ServerErrorException(e.getMessage());
+            }
+        } else {
+            throw new UnauthorizedException("you cannot resign");
+        }
+
+        return new CommandResult(gameData.gameID(),
+                List.of(new OutboundWSMessage(Target.OTHERS,
+                        new NotificationMessage("resign " + authSession.username()))));
     }
 
     private GameData getGameData(UserGameCommand command) throws ServerErrorException, DoesNotExistException {
