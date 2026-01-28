@@ -31,6 +31,7 @@ public class GameplayService {
 
     public GameplayService(GameDAO gameDAO, AuthDAO authDAO) {
         this.gameDAO = gameDAO;
+        this.authDAO = authDAO;
     }
 
     public CommandResult makeMove(MakeMoveCommand command)

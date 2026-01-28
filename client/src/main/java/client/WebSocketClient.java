@@ -24,14 +24,14 @@ import websocket.messages.ServerMessage;
 public class WebSocketClient extends Endpoint {
 
     Session session;
-    Gson gson;
+    Gson gson = new Gson();
 
     public WebSocketClient(String url, ServerMessageHandler messageHandler) throws Exception {
         URI uri = new URI(url);
         WebSocketContainer container = ContainerProvider.getWebSocketContainer();
-        container.connectToServer(this, uri);
+        session = container.connectToServer(this, uri);
 
-        this.session.addMessageHandler(new MessageHandler.Whole<String>() {
+        session.addMessageHandler(new MessageHandler.Whole<String>() {
             @Override
             public void onMessage(String message) {
                 ServerMessage serverMessage = gson.fromJson(message, ServerMessage.class);
@@ -59,6 +59,10 @@ public class WebSocketClient extends Endpoint {
         String json = gson.toJson(command);
 
         session.getBasicRemote().sendText(json);
+    }
+
+    public void close() throws IOException {
+        session.close();
     }
 
     @Override

@@ -155,13 +155,14 @@ public class Server {
                 try {
                     switch (command.getCommandType()) {
                         case CONNECT:
+                            command = ctx.messageAsClass(ConnectCommand.class);
                             commandResult = gameplayService.connect((ConnectCommand) command);
                             connectionManager.addSession(command.getGameID(), ctx);
                             break;
                         case MAKE_MOVE:
-                            MakeMoveCommand moveCommand = ctx.messageAsClass(MakeMoveCommand.class);
+                            command = ctx.messageAsClass(MakeMoveCommand.class);
                             try {
-                                commandResult = gameplayService.makeMove(moveCommand);
+                                commandResult = gameplayService.makeMove((MakeMoveCommand) command);
                             } catch (ServerErrorException e) {
                                 ctx.sendAsClass(
                                         new ErrorMessage(String.format(ERROR_MESSAGE_FORMAT, "internal server error")),
@@ -170,10 +171,12 @@ public class Server {
                             }
                             break;
                         case LEAVE:
+                            command = ctx.messageAsClass(LeaveCommand.class);
                             commandResult = gameplayService.leaveGame((LeaveCommand) command);
                             connectionManager.removeSession(command.getGameID(), ctx);
                             break;
                         case RESIGN:
+                            command = ctx.messageAsClass(ResignCommand.class);
                             commandResult = gameplayService.resign((ResignCommand) command);
                             break;
                     }

@@ -14,6 +14,8 @@ import com.google.gson.Gson;
 import chess.ChessGame.TeamColor;
 import jakarta.websocket.Endpoint;
 import jakarta.websocket.Session;
+import websocket.commands.ConnectCommand;
+import websocket.commands.LeaveCommand;
 import websocket.commands.UserGameCommand;
 
 public class ServerFacade {
@@ -89,18 +91,36 @@ public class ServerFacade {
         }
     }
 
-    public void playGame(String authToken, int gameID, TeamColor playerColor, ServerMessageHandler messageHandler)
+    public void playGame(String authToken, int gameID, TeamColor playerColor)
             throws BadRequestException, UnauthorizedException, AlreadyTakenException, ServerErrorException,
             ConnectionErrorException {
         var body = Map.ofEntries(Map.entry("gameID", gameID), Map.entry("playerColor", playerColor));
         var jsonBody = gson.toJson(body);
         var response = put("/game", authToken, jsonBody);
         parseResponse(response, null);
+    }
+
+    public void connectToGame(String authToken, int gameID, ServerMessageHandler messageHandler)
+            throws ConnectionErrorException {
         try {
             wsClient = new WebSocketClient(wsUrl, messageHandler);
+            wsClient.sendCommand(new ConnectCommand(authToken, gameID));
         } catch (Exception e) {
             throw new ConnectionErrorException(e.getMessage());
         }
+    }
+
+    public void leaveGame(String authToken, int gameID) throws ConnectionErrorException {
+        if (wsClient == null) {
+            throw new ConnectionErrorException("not connected to game");
+        }
+        try {
+            wsClient.sendCommand(new LeaveCommand(authToken, gameID));
+            wsClient.close();
+        } catch (IOException e) {
+            throw new ConnectionErrorException("Error connecting to server");
+        }
+        wsClient = null;
     }
 
     public void sendGameCommand(UserGameCommand command) throws ConnectionErrorException {

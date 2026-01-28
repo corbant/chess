@@ -11,12 +11,14 @@ public class ClientMain {
     public static Scanner scanner = new Scanner(System.in);
 
     public static void main(String[] args) {
-        var serverUrl = "http://localhost:8080";
-        if (args.length == 1) {
-            serverUrl = args[0];
+        String hostname = "localhost";
+        int port = 8080;
+        if (args.length == 2) {
+            hostname = args[0];
+            port = Integer.parseInt(args[1]);
         }
 
-        var client = new Client(serverUrl, printer);
+        var client = new Client(hostname, port, printer);
 
         System.out.println("♕  Welcome to 240 Chess. Type help to get started. ♕");
         while (true) {

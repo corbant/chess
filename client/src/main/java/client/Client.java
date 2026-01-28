@@ -3,112 +3,132 @@ package client;
 import java.util.List;
 import java.util.Scanner;
 
+import chess.ChessBoard;
 import chess.ChessGame;
 import chess.ChessGame.TeamColor;
 import ui.ChessBoardPrinter;
 import ui.Color;
 import ui.StreamPrinter;
+import websocket.messages.ErrorMessage;
+import websocket.messages.LoadGameMessage;
+import websocket.messages.NotificationMessage;
+import websocket.messages.ServerMessage;
 
 public class Client {
     private boolean isLoggedIn = false;
     private String authToken = null;
-    private boolean isPlayingGame = false;
-    private int gameID = 0;
+    private ChessGame currentGame = null;
+    private int currentGameID = 0;
+    private TeamColor teamColor = null;
     private ServerFacade server;
     private ChessBoardPrinter printer;
 
-    private List<Command> loggedOutCommands = List.of(new Command("register", "to create an account",
-            List.of(new CommandArgument("username", String.class, true),
-                    new CommandArgument("password", String.class, true),
-                    new CommandArgument("email", String.class, true)),
-            (commandArgs) -> {
-                String username = (String) commandArgs[0];
-                String password = (String) commandArgs[1];
-                String email = (String) commandArgs[2];
-                register(username, password, email);
-            }),
-            new Command("login", "to play chess",
-                    List.of(new CommandArgument("username", String.class, true),
-                            new CommandArgument("password", String.class, true)),
-                    (commandArgs) -> {
-                        String username = (String) commandArgs[0];
-                        String password = (String) commandArgs[1];
-                        login(username, password);
-                    }),
-            new Command("quit", "playing chess", null, (commandArgs) -> {
-                printer.print("Bye!");
-                System.exit(0);
-            }),
-            new Command("help", "with possible commands", null, (commandArgs) -> {
-                listCommands(printer, getAvailableCommands());
-            }));
+    private final List<Command> loggedOutCommands;
+    private final List<Command> loggedInCommands;
+    private final List<Command> gameplayCommands;
+    private final List<Command> observeCommands;
 
-    private List<Command> loggedInCommands = List
-            .of(new Command("create", "a game", List.of(new CommandArgument("name", String.class, true)),
-                    (commandArgs) -> {
-                        String name = (String) commandArgs[0];
-                        createGame(name);
-                    }),
-                    new Command("list", "games", null, (commandArgs) -> {
-                        listGames();
-                    }),
-                    new Command("join", "a game",
-                            List.of(new CommandArgument("id", Integer.class, true),
-                                    new CommandArgument("color", TeamColor.class, true)),
-                            (commandArgs) -> {
-                                int id = (int) commandArgs[0];
-                                TeamColor color = (TeamColor) commandArgs[1];
-                                joinGame(id, color);
-                            }),
-                    new Command("observe", "a game", List.of(new CommandArgument("id", Integer.class, true)),
-                            (commandArgs) -> {
-                                int id = (int) commandArgs[0];
-                                observeGame(id);
-                            }),
-                    new Command("logout", "when you are done", null, (commandArgs) -> {
-                        logout();
-                    }),
-                    new Command("quit", "playing chess", null, (commandArgs) -> {
-                        logout();
-                        printer.println("Bye!");
-                        System.exit(0);
-                    }),
-                    new Command("help", "with possible commands", null, (commandArgs) -> {
-                        listCommands(printer, getAvailableCommands());
-                    }));
-    private List<Command> gameplayCommands = List.of(
-            new Command("redraw", "the chess board", null, (commandArgs) -> {
-
-            }),
-            new Command("leave", "the game", null, (commandArgs) -> {
-
-            }),
-            new Command("move", "a chess piece",
-                    List.of(new CommandArgument("from", String.class, true),
-                            new CommandArgument("to", String.class, true),
-                            new CommandArgument("promotion", Character.class, false)),
-                    (commandArgs) -> {
-                        String from = (String) commandArgs[0];
-                        String to = (String) commandArgs[1];
-                        char pieceType;
-                        if (commandArgs[2] != null) {
-                            pieceType = (Character) commandArgs[2];
-                        }
-                    }),
-            new Command("resign", "the game", null, (commandArgs) -> {
-
-            }),
-            new Command("highlight", "all legal moves for piece",
-                    List.of(new CommandArgument("piece", String.class, true)), (commandArgs) -> {
-                        String pieceLocation = (String) commandArgs[0];
-                    }),
-            new Command("help", "with possible commands", null, (commandArgs) -> {
-                listCommands(printer, getAvailableCommands());
-            }));
-
-    public Client(String serverUrl, ChessBoardPrinter printer) {
-        this.server = new ServerFacade(serverUrl);
+    public Client(String hostname, int port, ChessBoardPrinter printer) {
+        this.server = new ServerFacade(hostname, port);
         this.printer = printer;
+
+        Command helpCommand = new Command("help", "with possible commands", null, (commandArgs) -> {
+            listCommands(printer, getAvailableCommands());
+        });
+
+        Command quitCommand = new Command("quit", "playing chess", null, (commandArgs) -> {
+            if (isLoggedIn) {
+                logout();
+            }
+            printer.println("Bye!");
+            System.exit(0);
+        });
+
+        Command leaveCommand = new Command("leave", "the game", null, (commandArgs) -> {
+            leaveGame();
+        });
+
+        Command redrawCommand = new Command("redraw", "the chess board", null, (commandArgs) -> {
+            drawBoard(currentGame.getBoard());
+        });
+
+        Command highlightCommand = new Command("highlight", "all legal moves for piece",
+                List.of(new CommandArgument("piece", String.class, true)), (commandArgs) -> {
+                    String pieceLocation = (String) commandArgs[0];
+                });
+
+        loggedOutCommands = List.of(new Command("register", "to create an account",
+                List.of(new CommandArgument("username", String.class, true),
+                        new CommandArgument("password", String.class, true),
+                        new CommandArgument("email", String.class, true)),
+                (commandArgs) -> {
+                    String username = (String) commandArgs[0];
+                    String password = (String) commandArgs[1];
+                    String email = (String) commandArgs[2];
+                    register(username, password, email);
+                }),
+                new Command("login", "to play chess",
+                        List.of(new CommandArgument("username", String.class, true),
+                                new CommandArgument("password", String.class, true)),
+                        (commandArgs) -> {
+                            String username = (String) commandArgs[0];
+                            String password = (String) commandArgs[1];
+                            login(username, password);
+                        }),
+                quitCommand,
+                helpCommand);
+
+        loggedInCommands = List
+                .of(new Command("create", "a game", List.of(new CommandArgument("name", String.class, true)),
+                        (commandArgs) -> {
+                            String name = (String) commandArgs[0];
+                            createGame(name);
+                        }),
+                        new Command("list", "games", null, (commandArgs) -> {
+                            listGames();
+                        }),
+                        new Command("join", "a game",
+                                List.of(new CommandArgument("id", Integer.class, true),
+                                        new CommandArgument("color", TeamColor.class, true)),
+                                (commandArgs) -> {
+                                    int id = (int) commandArgs[0];
+                                    TeamColor color = (TeamColor) commandArgs[1];
+                                    joinGame(id, color);
+                                }),
+                        new Command("observe", "a game",
+                                List.of(new CommandArgument("id", Integer.class, true)),
+                                (commandArgs) -> {
+                                    int id = (int) commandArgs[0];
+                                    observeGame(id);
+                                }),
+                        new Command("logout", "when you are done", null, (commandArgs) -> {
+                            logout();
+                        }),
+                        quitCommand,
+                        helpCommand);
+
+        gameplayCommands = List.of(
+                redrawCommand,
+                leaveCommand,
+                new Command("move", "a chess piece",
+                        List.of(new CommandArgument("from", String.class, true),
+                                new CommandArgument("to", String.class, true),
+                                new CommandArgument("promotion", Character.class, false)),
+                        (commandArgs) -> {
+                            String from = (String) commandArgs[0];
+                            String to = (String) commandArgs[1];
+                            char pieceType;
+                            if (commandArgs[2] != null) {
+                                pieceType = (Character) commandArgs[2];
+                            }
+                        }),
+                new Command("resign", "the game", null, (commandArgs) -> {
+
+                }),
+                highlightCommand,
+                helpCommand);
+        observeCommands = List.of(redrawCommand, leaveCommand, highlightCommand, helpCommand);
+
     }
 
     private void register(String username, String password, String email) {
@@ -223,6 +243,7 @@ public class Client {
     private void joinGame(int gameID, TeamColor color) {
         try {
             server.playGame(authToken, gameID, color);
+            server.connectToGame(authToken, gameID, this::handleServerMessage);
         } catch (BadRequestException e) {
             printErrorMessage("Invalid gameID or team color");
             return;
@@ -239,17 +260,42 @@ public class Client {
             printErrorMessage("Unable to connect to server, please try again");
             return;
         }
-        printer.newline();
-        printer.newline();
+        teamColor = color;
+        currentGameID = gameID;
+    }
 
-        isPlayingGame = true;
-        this.gameID = gameID;
+    private void leaveGame() {
+        try {
+            server.leaveGame(authToken, currentGameID);
+        } catch (ConnectionErrorException e) {
+            printErrorMessage("Unable to connect to server, please try again");
+        }
+        currentGame = null;
+        currentGameID = 0;
+        teamColor = null;
+    }
+
+    private void handleServerMessage(ServerMessage message) {
+        switch (message.getServerMessageType()) {
+            case LOAD_GAME:
+                currentGame = ((LoadGameMessage) message).getGame();
+                drawBoard(currentGame.getBoard());
+                break;
+            case NOTIFICATION:
+                printer.println(((NotificationMessage) message).getMessage());
+                break;
+            case ERROR:
+                printErrorMessage(((ErrorMessage) message).getErrorMessage());
+                break;
+        }
     }
 
     private void observeGame(int gameID) {
-        printer.newline();
-        printer.drawBoard(new ChessGame().getBoard(), false);
-        printer.newline();
+        try {
+            server.connectToGame(authToken, gameID, this::handleServerMessage);
+        } catch (ConnectionErrorException e) {
+            printErrorMessage("Unable to connect to server, please try again");
+        }
     }
 
     private void logout() {
@@ -270,6 +316,12 @@ public class Client {
         printer.println("Logged out");
     }
 
+    private void drawBoard(ChessBoard board) {
+        printer.newline();
+        printer.drawBoard(board, false);
+        printer.newline();
+    }
+
     private void printErrorMessage(String message) {
         printer.setTextColor(Color.RED);
         printer.println(message);
@@ -281,7 +333,16 @@ public class Client {
     }
 
     public List<Command> getAvailableCommands() {
-        return isLoggedIn ? isPlayingGame ? gameplayCommands : loggedInCommands : loggedOutCommands;
+        if (isLoggedIn) {
+            if (currentGame != null) {
+                if (teamColor != null) {
+                    return gameplayCommands;
+                }
+                return observeCommands;
+            }
+            return loggedInCommands;
+        }
+        return loggedOutCommands;
     }
 
     public void listCommands(StreamPrinter printer, List<Command> commands) {
