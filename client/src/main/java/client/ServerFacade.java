@@ -128,6 +128,7 @@ public class ServerFacade {
             throw new ConnectionErrorException("not connected to game");
         }
         try {
+            System.out.println("sending command: " + command.getCommandType());
             wsClient.sendCommand(command);
         } catch (IOException e) {
             throw new ConnectionErrorException("not connected to game");

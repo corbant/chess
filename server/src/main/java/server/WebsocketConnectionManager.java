@@ -27,7 +27,7 @@ public class WebsocketConnectionManager {
         var sessions = connections.get(gameID);
         if (sessions != null) {
             for (var session : sessions) {
-                if (session != exclude && session.session.isOpen()) {
+                if ((exclude == null || !session.sessionId().equals(exclude.sessionId())) && session.session.isOpen()) {
                     session.sendAsClass(message, message.getClass());
                 }
             }

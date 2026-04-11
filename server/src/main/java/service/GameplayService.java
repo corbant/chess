@@ -1,6 +1,7 @@
 package service;
 
 import java.util.List;
+import java.util.ArrayList;
 
 import chess.ChessGame;
 import chess.ChessMove;
@@ -13,8 +14,8 @@ import model.AuthData;
 import model.GameData;
 import model.GameResult;
 import service.result.CommandResult;
-import service.result.OutboundWSMessage;
-import service.result.OutboundWSMessage.Target;
+import service.result.OutboundWSServerMessage;
+import service.result.OutboundWSServerMessage.Target;
 import websocket.commands.ConnectCommand;
 import websocket.commands.LeaveCommand;
 import websocket.commands.MakeMoveCommand;
@@ -41,19 +42,19 @@ public class GameplayService {
         GameData gameData = getGameData(command);
         if (gameData.result() != null) {
             return new CommandResult(gameData.gameID(),
-                    List.of(new OutboundWSMessage(Target.SELF, new ErrorMessage("Error: game ended"))));
+                    List.of(new OutboundWSServerMessage(Target.SELF, new ErrorMessage("Error: game ended"))));
         }
         ChessGame game = gameData.game();
         ChessMove move = command.getMove();
         if (getUserTeamColor(authSession, gameData) != game.getTeamTurn()) {
             return new CommandResult(gameData.gameID(),
-                    List.of(new OutboundWSMessage(Target.SELF, new ErrorMessage("Error: invalid move"))));
+                    List.of(new OutboundWSServerMessage(Target.SELF, new ErrorMessage("Error: invalid move"))));
         }
         try {
             game.makeMove(move);
         } catch (InvalidMoveException e) {
             return new CommandResult(gameData.gameID(),
-                    List.of(new OutboundWSMessage(Target.SELF, new ErrorMessage("Error: invalid move"))));
+                    List.of(new OutboundWSServerMessage(Target.SELF, new ErrorMessage("Error: invalid move"))));
         }
 
         GameResult gameResult = null;
@@ -82,31 +83,34 @@ public class GameplayService {
             throw new ServerErrorException(e.getMessage());
         }
 
-        OutboundWSMessage checkMessage = null;
+        List<OutboundWSServerMessage> outboundMessages = new ArrayList<>();
+        outboundMessages.add(new OutboundWSServerMessage(Target.ALL, new LoadGameMessage(game)));
+        outboundMessages.add(new OutboundWSServerMessage(Target.OTHERS, new NotificationMessage("move " + move.toString())));
+
         if (gameResult != null) {
             switch (gameResult) {
                 case DRAW:
-                    checkMessage = new OutboundWSMessage(Target.ALL, new NotificationMessage("stalemate detected"));
+                    outboundMessages.add(new OutboundWSServerMessage(Target.ALL, new NotificationMessage("stalemate detected")));
                     break;
                 case BLACK:
-                    checkMessage = new OutboundWSMessage(Target.ALL, new NotificationMessage("black wins!"));
+                    outboundMessages.add(new OutboundWSServerMessage(Target.ALL, new NotificationMessage("black wins!")));
                     break;
                 case WHITE:
-                    checkMessage = new OutboundWSMessage(Target.ALL, new NotificationMessage("white wins!"));
+                    outboundMessages.add(new OutboundWSServerMessage(Target.ALL, new NotificationMessage("white wins!")));
                     break;
             }
         } else if (inCheck != null) {
             switch (inCheck) {
                 case WHITE:
-                    checkMessage = new OutboundWSMessage(Target.ALL, new NotificationMessage("white is in check"));
+                    outboundMessages.add(new OutboundWSServerMessage(Target.ALL, new NotificationMessage("white is in check")));
+                    break;
                 case BLACK:
-                    checkMessage = new OutboundWSMessage(Target.ALL, new NotificationMessage("black is in check"));
+                    outboundMessages.add(new OutboundWSServerMessage(Target.ALL, new NotificationMessage("black is in check")));
+                    break;
             }
         }
-        return new CommandResult(gameData.gameID(),
-                List.of(new OutboundWSMessage(Target.ALL, new LoadGameMessage(game)),
-                        new OutboundWSMessage(Target.OTHERS, new NotificationMessage("move " + move.toString())),
-                        checkMessage));
+
+        return new CommandResult(gameData.gameID(), outboundMessages);
     }
 
     public CommandResult connect(ConnectCommand command)
@@ -118,9 +122,9 @@ public class GameplayService {
         String joiningAs = userTeamColor != null ? userTeamColor.toString() : "OBSERVER";
 
         return new CommandResult(gameData.gameID(),
-                List.of(new OutboundWSMessage(OutboundWSMessage.Target.SELF, new LoadGameMessage(gameData.game())),
-                        new OutboundWSMessage(OutboundWSMessage.Target.OTHERS,
-                                "join " + authSession.username() + " " + joiningAs)));
+                List.of(new OutboundWSServerMessage(OutboundWSServerMessage.Target.SELF, new LoadGameMessage(gameData.game())),
+                        new OutboundWSServerMessage(OutboundWSServerMessage.Target.OTHERS,
+                                new NotificationMessage("join " + authSession.username() + " " + joiningAs))));
     }
 
     public CommandResult leaveGame(LeaveCommand command)
@@ -148,7 +152,7 @@ public class GameplayService {
         }
 
         return new CommandResult(gameData.gameID(),
-                List.of(new OutboundWSMessage(Target.OTHERS, "leave " + authSession.username())));
+                List.of(new OutboundWSServerMessage(OutboundWSServerMessage.Target.OTHERS, new NotificationMessage("leave " + authSession.username()))));
     }
 
     public CommandResult resign(ResignCommand command)
@@ -178,7 +182,7 @@ public class GameplayService {
         }
 
         return new CommandResult(gameData.gameID(),
-                List.of(new OutboundWSMessage(Target.OTHERS,
+                List.of(new OutboundWSServerMessage(OutboundWSServerMessage.Target.OTHERS,
                         new NotificationMessage("resign " + authSession.username()))));
     }
 

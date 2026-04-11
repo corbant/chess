@@ -194,9 +194,9 @@ public class Server {
                 if (commandResult != null) {
                     for (var outbound : commandResult.outbound()) {
                         switch (outbound.target()) {
-                            case SELF -> ctx.sendAsClass(outbound.payload(), outbound.payload().getClass());
-                            case OTHERS -> connectionManager.broadcast(commandResult.gameID(), outbound.payload(), ctx);
-                            case ALL -> connectionManager.broadcastAll(commandResult.gameID(), outbound.payload());
+                            case SELF -> ctx.sendAsClass(outbound.message(), outbound.message().getClass());
+                            case OTHERS -> connectionManager.broadcast(commandResult.gameID(), outbound.message(), ctx);
+                            case ALL -> connectionManager.broadcastAll(commandResult.gameID(), outbound.message());
                         }
                     }
                 }

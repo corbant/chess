@@ -5,10 +5,16 @@ import java.util.Scanner;
 
 import chess.ChessBoard;
 import chess.ChessGame;
+import chess.ChessMove;
+import chess.ChessPiece;
+import chess.ChessPosition;
 import chess.ChessGame.TeamColor;
+import chess.ChessPiece.PieceType;
 import ui.ChessBoardPrinter;
 import ui.Color;
 import ui.StreamPrinter;
+import websocket.commands.MakeMoveCommand;
+import websocket.commands.ResignCommand;
 import websocket.messages.ErrorMessage;
 import websocket.messages.LoadGameMessage;
 import websocket.messages.NotificationMessage;
@@ -117,18 +123,44 @@ public class Client {
                         (commandArgs) -> {
                             String from = (String) commandArgs[0];
                             String to = (String) commandArgs[1];
-                            char pieceType;
+
+                            ChessPosition startPosition;
+                            ChessPosition endPosition;
+                            try {
+                                startPosition = ChessPosition.fromString(from);
+                                endPosition = ChessPosition.fromString(to);
+                            } catch (IllegalArgumentException e) {
+                                printErrorMessage("Invalid move format, please use format <column><row> (e.g. a1)");
+                                return;
+                            }
+
+                            ChessMove move;
+
                             if (commandArgs[2] != null) {
-                                pieceType = (Character) commandArgs[2];
+                                char pieceType = (Character) commandArgs[2];
+                                PieceType promotionPiece;
+                                try {
+                                    promotionPiece = ChessPiece.pieceTypeFromChar(pieceType);
+                                } catch (IllegalArgumentException e) {
+                                    printErrorMessage("Invalid promotion piece type, valid types are Q, R, B, and N");
+                                    return;
+                                }
+                                move = new ChessMove(startPosition, endPosition, promotionPiece);
+                            }
+
+                            move = new ChessMove(startPosition, endPosition);
+                            try {
+                                server.sendGameCommand(new MakeMoveCommand(authToken, currentGameID, move));
+                            } catch (ConnectionErrorException e) {
+                                printErrorMessage("Unable to connect to server, please try again");
                             }
                         }),
                 new Command("resign", "the game", null, (commandArgs) -> {
-
+                    resign();
                 }),
                 highlightCommand,
                 helpCommand);
         observeCommands = List.of(redrawCommand, leaveCommand, highlightCommand, helpCommand);
-
     }
 
     private void register(String username, String password, String email) {
@@ -275,6 +307,14 @@ public class Client {
         teamColor = null;
     }
 
+    private void resign() {
+        try {
+            server.sendGameCommand(new ResignCommand(authToken, currentGameID));
+        } catch (ConnectionErrorException e) {
+            printErrorMessage("Unable to connect to server, please try again");
+        }
+    }
+
     private void handleServerMessage(ServerMessage message) {
         switch (message.getServerMessageType()) {
             case LOAD_GAME:
@@ -390,6 +430,9 @@ public class Client {
     }
 
     public void interpretCommand(String line) throws InvalidCommandException {
+        if (line == null || line.isBlank()) {
+            return;
+        }
         try (var lineScanner = new Scanner(line).useDelimiter(" ")) {
             var commandName = lineScanner.next();
             var command = findCommand(commandName, getAvailableCommands());
