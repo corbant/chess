@@ -2,6 +2,8 @@ package ui;
 
 import java.io.PrintStream;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 import chess.ChessBoard;
 import chess.ChessMove;
@@ -24,51 +26,68 @@ public class ChessBoardPrinter extends StreamPrinter {
         int colStart = isBlack ? ChessBoard.BOARD_COLS + 1 : 0;
         int colEnd = isBlack ? -1 : ChessBoard.BOARD_ROWS + 2;
         int colDelta = isBlack ? -1 : 1;
+        Set<ChessPosition> highlightedPositions = getHighlightedPositions(highlightedMoves);
         // starts in the top left
         for (int row = rowStart; isBlack ? row > rowEnd : row < rowEnd; row += rowDelta) {
             for (int col = colStart; isBlack ? col > colEnd : col < rowEnd; col += colDelta) {
-                if (row < 1 || row > ChessBoard.BOARD_ROWS || col < 1 || col > ChessBoard.BOARD_COLS) {
-                    // border
-                    setBackgroundColor(Color.LIGHT_GREY);
-                    if (col >= 1 && col <= ChessBoard.BOARD_ROWS) {
-                        char colLabel = 'a';
-                        colLabel += col - 1;
-                        out.print(" " + colLabel + " ");
-                    } else if (row >= 1 && row <= ChessBoard.BOARD_COLS) {
-                        int rowLabel = 8 - row + 1;
-                        out.print(" " + rowLabel + " ");
-                    } else {
-                        out.print("   ");
-                    }
+                if (isBorderCell(row, col)) {
+                    drawBorderCell(row, col);
+                    continue;
+                }
+
+                var position = new ChessPosition(ChessBoard.BOARD_ROWS - row + 1, col);
+                setBoardCellBackground(board, row, col, position, highlightedPositions);
+
+                ChessPiece piece = board.getPiece(position);
+                if (piece != null) {
+                    drawChessPiece(piece.getPieceType(), piece.getTeamColor());
                 } else {
-                    // chess board
-                    // determine background color
-                    var position = new ChessPosition(ChessBoard.BOARD_ROWS - row + 1, col);
-                    if (highlightedMoves != null && !highlightedMoves.isEmpty() && highlightedMoves.stream().anyMatch(move -> move.getEndPosition().equals(position))) {
-                        if (board.getPiece(position) != null) {
-                            setBackgroundColor(Color.RED);
-                        } else {
-                            setBackgroundColor(Color.GREEN);
-                        }
-                    } else {
-                        setBackgroundColor((row % 2 == 0 && col % 2 != 0) || (row % 2 != 0 && col % 2 == 0) ? Color.BLACK
-                            : Color.WHITE);
-                    }
-                    
-                    // rows are reversed since the console prints top to bottom whereas the board is
-                    // bottom to top
-                    ChessPiece piece = board
-                            .getPiece(new ChessPosition(ChessBoard.BOARD_ROWS - row + 1, col));
-                    if (piece != null) {
-                        drawChessPiece(piece.getPieceType(), piece.getTeamColor());
-                    } else {
-                        out.print("   ");
-                    }
+                    out.print("   ");
                 }
             }
             setBackgroundColor(Color.NONE);
             out.print('\n');
         }
+    }
+
+    private Set<ChessPosition> getHighlightedPositions(Collection<ChessMove> highlightedMoves) {
+        Set<ChessPosition> positions = new HashSet<>();
+        if (highlightedMoves == null || highlightedMoves.isEmpty()) {
+            return positions;
+        }
+        for (var move : highlightedMoves) {
+            positions.add(move.getEndPosition());
+        }
+        return positions;
+    }
+
+    private boolean isBorderCell(int row, int col) {
+        return row < 1 || row > ChessBoard.BOARD_ROWS || col < 1 || col > ChessBoard.BOARD_COLS;
+    }
+
+    private void drawBorderCell(int row, int col) {
+        setBackgroundColor(Color.LIGHT_GREY);
+        if (col >= 1 && col <= ChessBoard.BOARD_ROWS) {
+            char colLabel = (char) ('a' + col - 1);
+            out.print(" " + colLabel + " ");
+            return;
+        }
+        if (row >= 1 && row <= ChessBoard.BOARD_COLS) {
+            int rowLabel = 8 - row + 1;
+            out.print(" " + rowLabel + " ");
+            return;
+        }
+        out.print("   ");
+    }
+
+    private void setBoardCellBackground(ChessBoard board, int row, int col, ChessPosition position,
+            Set<ChessPosition> highlightedPositions) {
+        if (highlightedPositions.contains(position)) {
+            setBackgroundColor(board.getPiece(position) != null ? Color.RED : Color.GREEN);
+            return;
+        }
+        boolean isDarkSquare = (row + col) % 2 == 1;
+        setBackgroundColor(isDarkSquare ? Color.BLACK : Color.WHITE);
     }
 
     public void drawBoard(ChessBoard board, boolean isBlack) {

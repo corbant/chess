@@ -10,9 +10,12 @@ import chess.ChessPiece;
 import chess.ChessPosition;
 import chess.ChessGame.TeamColor;
 import chess.ChessPiece.PieceType;
+import client.response.CreateGameResponse;
+import client.response.ListGamesResponse;
+import client.response.LoginResponse;
 import ui.ChessBoardPrinter;
+import ui.CommandPrinter;
 import ui.Color;
-import ui.StreamPrinter;
 import websocket.commands.MakeMoveCommand;
 import websocket.commands.ResignCommand;
 import websocket.messages.ErrorMessage;
@@ -37,28 +40,48 @@ public class Client {
     public Client(String hostname, int port, ChessBoardPrinter printer) {
         this.server = new ServerFacade(hostname, port);
         this.printer = printer;
+        Command helpCommand = createHelpCommand();
+        Command quitCommand = createQuitCommand();
+        Command leaveCommand = createLeaveCommand();
+        Command redrawCommand = createRedrawCommand();
+        Command highlightCommand = createHighlightCommand();
 
-        Command helpCommand = new Command("help", "with possible commands", null, (commandArgs) -> {
+        loggedOutCommands = createLoggedOutCommands(helpCommand, quitCommand);
+        loggedInCommands = createLoggedInCommands(helpCommand, quitCommand);
+        gameplayCommands = createGameplayCommands(helpCommand, leaveCommand, redrawCommand, highlightCommand);
+        observeCommands = List.of(redrawCommand, leaveCommand, highlightCommand, helpCommand);
+    }
+
+    private Command createHelpCommand() {
+        return new Command("help", "with possible commands", null, (commandArgs) -> {
             listCommands(printer, getAvailableCommands());
         });
+    }
 
-        Command quitCommand = new Command("quit", "playing chess", null, (commandArgs) -> {
+    private Command createQuitCommand() {
+        return new Command("quit", "playing chess", null, (commandArgs) -> {
             if (isLoggedIn) {
                 logout();
             }
             printer.println("Bye!");
             System.exit(0);
         });
+    }
 
-        Command leaveCommand = new Command("leave", "the game", null, (commandArgs) -> {
+    private Command createLeaveCommand() {
+        return new Command("leave", "the game", null, (commandArgs) -> {
             leaveGame();
         });
+    }
 
-        Command redrawCommand = new Command("redraw", "the chess board", null, (commandArgs) -> {
+    private Command createRedrawCommand() {
+        return new Command("redraw", "the chess board", null, (commandArgs) -> {
             drawBoard(currentGame.getBoard());
         });
+    }
 
-        Command highlightCommand = new Command("highlight", "all legal moves for piece",
+    private Command createHighlightCommand() {
+        return new Command("highlight", "all legal moves for piece",
                 List.of(new CommandArgument("piece", String.class, true)), (commandArgs) -> {
                     String pieceLocation = (String) commandArgs[0];
                     ChessPosition position;
@@ -70,107 +93,99 @@ public class Client {
                     }
                     printer.newline();
                     var validMoves = currentGame.validMoves(position);
-                    printer.drawBoard(currentGame.getBoard(), teamColor != null ? teamColor == TeamColor.BLACK : false, validMoves);
+                    printer.drawBoard(currentGame.getBoard(), teamColor != null ? teamColor == TeamColor.BLACK : false,
+                            validMoves);
                 });
+    }
 
-        loggedOutCommands = List.of(new Command("register", "to create an account",
-                List.of(new CommandArgument("username", String.class, true),
-                        new CommandArgument("password", String.class, true),
-                        new CommandArgument("email", String.class, true)),
-                (commandArgs) -> {
-                    String username = (String) commandArgs[0];
-                    String password = (String) commandArgs[1];
-                    String email = (String) commandArgs[2];
-                    register(username, password, email);
-                }),
+    private List<Command> createLoggedOutCommands(Command helpCommand, Command quitCommand) {
+        return List.of(
+                new Command("register", "to create an account",
+                        List.of(new CommandArgument("username", String.class, true),
+                                new CommandArgument("password", String.class, true),
+                                new CommandArgument("email", String.class, true)),
+                        (commandArgs) -> register((String) commandArgs[0], (String) commandArgs[1],
+                                (String) commandArgs[2])),
                 new Command("login", "to play chess",
                         List.of(new CommandArgument("username", String.class, true),
                                 new CommandArgument("password", String.class, true)),
-                        (commandArgs) -> {
-                            String username = (String) commandArgs[0];
-                            String password = (String) commandArgs[1];
-                            login(username, password);
-                        }),
+                        (commandArgs) -> login((String) commandArgs[0], (String) commandArgs[1])),
                 quitCommand,
                 helpCommand);
+    }
 
-        loggedInCommands = List
-                .of(new Command("create", "a game", List.of(new CommandArgument("name", String.class, true)),
-                        (commandArgs) -> {
-                            String name = (String) commandArgs[0];
-                            createGame(name);
-                        }),
-                        new Command("list", "games", null, (commandArgs) -> {
-                            listGames();
-                        }),
-                        new Command("join", "a game",
-                                List.of(new CommandArgument("id", Integer.class, true),
-                                        new CommandArgument("color", TeamColor.class, true)),
-                                (commandArgs) -> {
-                                    int id = (int) commandArgs[0];
-                                    TeamColor color = (TeamColor) commandArgs[1];
-                                    joinGame(id, color);
-                                }),
-                        new Command("observe", "a game",
-                                List.of(new CommandArgument("id", Integer.class, true)),
-                                (commandArgs) -> {
-                                    int id = (int) commandArgs[0];
-                                    observeGame(id);
-                                }),
-                        new Command("logout", "when you are done", null, (commandArgs) -> {
-                            logout();
-                        }),
-                        quitCommand,
-                        helpCommand);
+    private List<Command> createLoggedInCommands(Command helpCommand, Command quitCommand) {
+        return List.of(
+                new Command("create", "a game", List.of(new CommandArgument("name", String.class, true)),
+                        (commandArgs) -> createGame((String) commandArgs[0])),
+                new Command("list", "games", null, (commandArgs) -> listGames()),
+                new Command("join", "a game",
+                        List.of(new CommandArgument("id", Integer.class, true),
+                                new CommandArgument("color", TeamColor.class, true)),
+                        (commandArgs) -> joinGame((int) commandArgs[0], (TeamColor) commandArgs[1])),
+                new Command("observe", "a game", List.of(new CommandArgument("id", Integer.class, true)),
+                        (commandArgs) -> observeGame((int) commandArgs[0])),
+                new Command("logout", "when you are done", null, (commandArgs) -> logout()),
+                quitCommand,
+                helpCommand);
+    }
 
-        gameplayCommands = List.of(
+    private List<Command> createGameplayCommands(Command helpCommand, Command leaveCommand,
+            Command redrawCommand, Command highlightCommand) {
+        return List.of(
                 redrawCommand,
                 leaveCommand,
-                new Command("move", "a chess piece",
-                        List.of(new CommandArgument("from", String.class, true),
-                                new CommandArgument("to", String.class, true),
-                                new CommandArgument("promotion", Character.class, false)),
-                        (commandArgs) -> {
-                            String from = (String) commandArgs[0];
-                            String to = (String) commandArgs[1];
-
-                            ChessPosition startPosition;
-                            ChessPosition endPosition;
-                            try {
-                                startPosition = ChessPosition.fromString(from);
-                                endPosition = ChessPosition.fromString(to);
-                            } catch (IllegalArgumentException e) {
-                                printErrorMessage("Invalid move format, please use format <column><row> (e.g. a1)");
-                                return;
-                            }
-
-                            ChessMove move;
-
-                            if (commandArgs[2] != null) {
-                                char pieceType = (Character) commandArgs[2];
-                                PieceType promotionPiece;
-                                try {
-                                    promotionPiece = ChessPiece.pieceTypeFromChar(pieceType);
-                                } catch (IllegalArgumentException e) {
-                                    printErrorMessage("Invalid promotion piece type, valid types are Q, R, B, and N");
-                                    return;
-                                }
-                                move = new ChessMove(startPosition, endPosition, promotionPiece);
-                            }
-
-                            move = new ChessMove(startPosition, endPosition);
-                            try {
-                                server.sendGameCommand(new MakeMoveCommand(authToken, currentGameID, move));
-                            } catch (ConnectionErrorException e) {
-                                printErrorMessage("Unable to connect to server, please try again");
-                            }
-                        }),
-                new Command("resign", "the game", null, (commandArgs) -> {
-                    resign();
-                }),
+                createMoveCommand(),
+                new Command("resign", "the game", null, (commandArgs) -> resign()),
                 highlightCommand,
                 helpCommand);
-        observeCommands = List.of(redrawCommand, leaveCommand, highlightCommand, helpCommand);
+    }
+
+    private Command createMoveCommand() {
+        return new Command("move", "a chess piece",
+                List.of(new CommandArgument("from", String.class, true),
+                        new CommandArgument("to", String.class, true),
+                        new CommandArgument("promotion", Character.class, false)),
+                (commandArgs) -> {
+                    ChessMove move = parseMove(commandArgs);
+                    if (move == null) {
+                        return;
+                    }
+                    try {
+                        server.sendGameCommand(new MakeMoveCommand(authToken, currentGameID, move));
+                    } catch (ConnectionErrorException e) {
+                        printErrorMessage("Unable to connect to server, please try again");
+                    }
+                });
+    }
+
+    private ChessMove parseMove(Object[] commandArgs) {
+        String from = (String) commandArgs[0];
+        String to = (String) commandArgs[1];
+
+        ChessPosition startPosition;
+        ChessPosition endPosition;
+        try {
+            startPosition = ChessPosition.fromString(from);
+            endPosition = ChessPosition.fromString(to);
+        } catch (IllegalArgumentException e) {
+            printErrorMessage("Invalid move format, please use format <column><row> (e.g. a1)");
+            return null;
+        }
+
+        if (commandArgs[2] != null) {
+            char pieceType = (Character) commandArgs[2];
+            PieceType promotionPiece;
+            try {
+                promotionPiece = ChessPiece.pieceTypeFromChar(pieceType);
+            } catch (IllegalArgumentException e) {
+                printErrorMessage("Invalid promotion piece type, valid types are Q, R, B, and N");
+                return null;
+            }
+            return new ChessMove(startPosition, endPosition, promotionPiece);
+        }
+
+        return new ChessMove(startPosition, endPosition);
     }
 
     private void register(String username, String password, String email) {
@@ -395,48 +410,8 @@ public class Client {
         return loggedOutCommands;
     }
 
-    public void listCommands(StreamPrinter printer, List<Command> commands) {
-        for (var command : commands) {
-            listCommand(printer, command);
-        }
-        printer.setTextColor(Color.NONE);
-    }
-
-    private void listCommand(StreamPrinter printer, Command command) {
-        printer.setTextColor(Color.BLUE);
-        printer.print(command.name() + " ");
-
-        if (command.args() != null && !command.args().isEmpty()) {
-            for (var arg : command.args()) {
-                printArgumentFormat(printer, arg);
-            }
-        }
-
-        printer.setTextColor(Color.MAGENTA);
-        printer.print("- " + command.description() + "\n");
-    }
-
-    private void printArgumentFormat(StreamPrinter printer, CommandArgument arg) {
-        Class<?> type = arg.type();
-        if (type.isEnum()) {
-            printEnumOptions(printer, type);
-        } else if (!arg.required()) {
-            printer.print("[" + arg.name().toUpperCase() + "] ");
-        } else {
-            printer.print("<" + arg.name().toUpperCase() + "> ");
-        }
-    }
-
-    private void printEnumOptions(StreamPrinter printer, Class<?> enumType) {
-        var options = enumType.getEnumConstants();
-        printer.print("[");
-        for (int i = 0; i < options.length; i++) {
-            printer.print(options[i].toString().toUpperCase());
-            if (i < options.length - 1) {
-                printer.print("|");
-            }
-        }
-        printer.print("] ");
+    public void listCommands(ChessBoardPrinter printer, List<Command> commands) {
+        CommandPrinter.listCommands(printer, commands);
     }
 
     public void interpretCommand(String line) throws InvalidCommandException {

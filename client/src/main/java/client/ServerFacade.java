@@ -12,6 +12,10 @@ import java.util.Map;
 import com.google.gson.Gson;
 
 import chess.ChessGame.TeamColor;
+import client.response.CreateGameResponse;
+import client.response.ListGamesResponse;
+import client.response.LoginResponse;
+import client.response.ServerResponse;
 import websocket.commands.ConnectCommand;
 import websocket.commands.LeaveCommand;
 import websocket.commands.UserGameCommand;

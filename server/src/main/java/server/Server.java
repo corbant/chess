@@ -14,6 +14,7 @@ import dataaccess.SQLUserDAO;
 import io.javalin.*;
 import io.javalin.json.JavalinGson;
 import io.javalin.validation.ValidationException;
+import io.javalin.websocket.WsMessageContext;
 import service.*;
 import service.request.*;
 import service.result.*;
@@ -40,13 +41,7 @@ public class Server {
     private static final String ERROR_MESSAGE_FORMAT = "Error: %s";
 
     public Server() {
-        // Configure DB
-        try {
-            DatabaseManager.createDatabase();
-        } catch (DataAccessException e) {
-            // can't access the db
-            System.exit(-1);
-        }
+        initializeDatabase();
         // DAOs
         authDAO = new SQLAuthDAO();
         userDAO = new SQLUserDAO();
@@ -57,16 +52,32 @@ public class Server {
         dbService = new DBService(authDAO, userDAO, gameDAO);
         gameplayService = new GameplayService(gameDAO, authDAO);
 
-        // WS connection manager
         connectionManager = new WebsocketConnectionManager();
+        javalin = createJavalin();
+        registerHttpRoutes();
+        registerWebsocketRoutes();
+        addExceptionHandlers(javalin);
+    }
 
-        // web server
-        javalin = Javalin.create(config -> {
+    private void initializeDatabase() {
+        // Configure DB
+        try {
+            DatabaseManager.createDatabase();
+        } catch (DataAccessException e) {
+            // can't access the db
+            System.exit(-1);
+        }
+    }
+
+    private Javalin createJavalin() {
+        return Javalin.create(config -> {
             config.staticFiles.add("web");
             var serializer = new Gson();
             config.jsonMapper(new JavalinGson(serializer, false));
         });
-        // handlers
+    }
+
+    private void registerHttpRoutes() {
         javalin.post("/user", ctx -> {
             RegisterRequest registerRequest = ctx.bodyValidator(RegisterRequest.class)
                     .check(req -> req.username() != null && !req.username().isBlank(), "username required")
@@ -125,85 +136,84 @@ public class Server {
             dbService.clear();
             ctx.status(200);
         });
+    }
 
+    private void registerWebsocketRoutes() {
         javalin.ws("/ws", ws -> {
-
-            ws.onConnect(ctx -> {
-                ctx.enableAutomaticPings();
-            });
-
+            ws.onConnect(ctx -> ctx.enableAutomaticPings());
             ws.onMessage(ctx -> {
                 UserGameCommand command = ctx.messageAsClass(UserGameCommand.class);
-                // validate
-                // catch (UnauthorizedException e) {
-                // ctx.sendAsClass(new ErrorMessage(String.format(ERROR_MESSAGE_FORMAT,
-                // "unauthorized")),
-                // ErrorMessage.class);
-                // return;
-                // } catch (DoesNotExistException e) {
-                // ctx.sendAsClass(new ErrorMessage(String.format(ERROR_MESSAGE_FORMAT, "game
-                // does not exist")),
-                // ErrorMessage.class);
-                // return;
-                // } catch (ServerErrorException e) {
-                // ctx.sendAsClass(new ErrorMessage(String.format(ERROR_MESSAGE_FORMAT,
-                // "internal server error")),
-                // ErrorMessage.class);
-                // return;
-                // }
-                CommandResult commandResult = null;
-                try {
-                    switch (command.getCommandType()) {
-                        case CONNECT:
-                            command = ctx.messageAsClass(ConnectCommand.class);
-                            commandResult = gameplayService.connect((ConnectCommand) command);
-                            connectionManager.addSession(command.getGameID(), ctx);
-                            break;
-                        case MAKE_MOVE:
-                            command = ctx.messageAsClass(MakeMoveCommand.class);
-                            try {
-                                commandResult = gameplayService.makeMove((MakeMoveCommand) command);
-                            } catch (ServerErrorException e) {
-                                ctx.sendAsClass(
-                                        new ErrorMessage(String.format(ERROR_MESSAGE_FORMAT, "internal server error")),
-                                        ErrorMessage.class);
-                                return;
-                            }
-                            break;
-                        case LEAVE:
-                            command = ctx.messageAsClass(LeaveCommand.class);
-                            commandResult = gameplayService.leaveGame((LeaveCommand) command);
-                            connectionManager.removeSession(command.getGameID(), ctx);
-                            break;
-                        case RESIGN:
-                            command = ctx.messageAsClass(ResignCommand.class);
-                            commandResult = gameplayService.resign((ResignCommand) command);
-                            break;
-                    }
-                } catch (UnauthorizedException e) {
-                    ctx.sendAsClass(new ErrorMessage(String.format(ERROR_MESSAGE_FORMAT, "unauthorized")), ErrorMessage.class);
-                } catch (DoesNotExistException e) {
-                    ctx.sendAsClass(new ErrorMessage(String.format(ERROR_MESSAGE_FORMAT, "game not found")),
-                            ErrorMessage.class);
-                } catch (ServerErrorException e) {
-                    ctx.sendAsClass(
-                            new ErrorMessage(String.format(ERROR_MESSAGE_FORMAT, "server error, please try again")),
-                            ErrorMessage.class);
-                }
-
+                CommandResult commandResult = handleWebsocketCommand(ctx, command);
                 if (commandResult != null) {
-                    for (var outbound : commandResult.outbound()) {
-                        switch (outbound.target()) {
-                            case SELF -> ctx.sendAsClass(outbound.message(), outbound.message().getClass());
-                            case OTHERS -> connectionManager.broadcast(commandResult.gameID(), outbound.message(), ctx);
-                            case ALL -> connectionManager.broadcastAll(commandResult.gameID(), outbound.message());
-                        }
-                    }
+                    dispatchOutboundMessages(ctx, commandResult);
                 }
             });
         });
-        // exception handlers
-        addExceptionHandlers(javalin);
+    }
+
+    private CommandResult handleWebsocketCommand(WsMessageContext ctx, UserGameCommand command) {
+        try {
+            return executeWebsocketCommand(ctx, command);
+        } catch (UnauthorizedException e) {
+            sendWsError(ctx, "unauthorized");
+        } catch (DoesNotExistException e) {
+            sendWsError(ctx, "game not found");
+        } catch (ServerErrorException e) {
+            sendWsError(ctx, "server error, please try again");
+        }
+        return null;
+    }
+
+    private CommandResult executeWebsocketCommand(WsMessageContext ctx, UserGameCommand command)
+            throws UnauthorizedException, DoesNotExistException, ServerErrorException {
+        return switch (command.getCommandType()) {
+            case CONNECT -> handleConnect(ctx);
+            case MAKE_MOVE -> handleMakeMove(ctx);
+            case LEAVE -> handleLeave(ctx);
+            case RESIGN -> handleResign(ctx);
+        };
+    }
+
+    private CommandResult handleConnect(WsMessageContext ctx)
+            throws UnauthorizedException, DoesNotExistException, ServerErrorException {
+        ConnectCommand command = ctx.messageAsClass(ConnectCommand.class);
+        CommandResult result = gameplayService.connect(command);
+        connectionManager.addSession(command.getGameID(), ctx);
+        return result;
+    }
+
+    private CommandResult handleMakeMove(WsMessageContext ctx)
+            throws UnauthorizedException, DoesNotExistException, ServerErrorException {
+        MakeMoveCommand command = ctx.messageAsClass(MakeMoveCommand.class);
+        return gameplayService.makeMove(command);
+    }
+
+    private CommandResult handleLeave(WsMessageContext ctx)
+            throws UnauthorizedException, DoesNotExistException, ServerErrorException {
+        LeaveCommand command = ctx.messageAsClass(LeaveCommand.class);
+        CommandResult result = gameplayService.leaveGame(command);
+        connectionManager.removeSession(command.getGameID(), ctx);
+        return result;
+    }
+
+    private CommandResult handleResign(WsMessageContext ctx)
+            throws UnauthorizedException, DoesNotExistException, ServerErrorException {
+        ResignCommand command = ctx.messageAsClass(ResignCommand.class);
+        return gameplayService.resign(command);
+    }
+
+    private void dispatchOutboundMessages(WsMessageContext ctx, CommandResult commandResult) {
+        for (var outbound : commandResult.outbound()) {
+            switch (outbound.target()) {
+                case SELF -> ctx.sendAsClass(outbound.message(), outbound.message().getClass());
+                case OTHERS -> connectionManager.broadcast(commandResult.gameID(), outbound.message(), ctx);
+                case ALL -> connectionManager.broadcastAll(commandResult.gameID(), outbound.message());
+            }
+        }
+    }
+
+    private void sendWsError(WsMessageContext ctx, String errorText) {
+        ctx.sendAsClass(new ErrorMessage(String.format(ERROR_MESSAGE_FORMAT, errorText)), ErrorMessage.class);
     }
 
     private void addExceptionHandlers(Javalin javalin) {

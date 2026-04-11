@@ -85,7 +85,8 @@ public class GameplayService {
 
         List<OutboundWSServerMessage> outboundMessages = new ArrayList<>();
         outboundMessages.add(new OutboundWSServerMessage(Target.ALL, new LoadGameMessage(game)));
-        outboundMessages.add(new OutboundWSServerMessage(Target.OTHERS, new NotificationMessage("move " + move.toString())));
+        outboundMessages.add(
+            new OutboundWSServerMessage(Target.OTHERS, new NotificationMessage("move " + move.toString())));
 
         if (gameResult != null) {
             switch (gameResult) {
@@ -152,7 +153,8 @@ public class GameplayService {
         }
 
         return new CommandResult(gameData.gameID(),
-                List.of(new OutboundWSServerMessage(OutboundWSServerMessage.Target.OTHERS, new NotificationMessage("leave " + authSession.username()))));
+            List.of(new OutboundWSServerMessage(OutboundWSServerMessage.Target.OTHERS,
+                new NotificationMessage("leave " + authSession.username()))));
     }
 
     public CommandResult resign(ResignCommand command)
