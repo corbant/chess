@@ -4,7 +4,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import io.javalin.websocket.WsContext;
-import websocket.messages.ServerMessage;
 
 public class WebsocketConnectionManager {
     private final ConcurrentHashMap<Integer, Set<WsContext>> connections = new ConcurrentHashMap<>();
