@@ -16,6 +16,29 @@ public class ChessPosition {
         this.col = col;
     }
 
+    public ChessPosition(int row, char col) {
+        this.row = row;
+        this.col = columnCharToInt(col);
+    }
+
+    public ChessPosition(String position) {
+        
+    }
+
+    public static ChessPosition fromString(String position) throws IllegalArgumentException {
+        var parts = position.split("");
+        if (parts.length != 2) {
+            throw new IllegalArgumentException("Invalid position: " + position);
+        }
+        var col = columnCharToInt(parts[0].charAt(0));
+        var row = Integer.parseInt(parts[1]);
+        return new ChessPosition(row, col);
+    }
+
+    private static int columnCharToInt(char col) {
+        return col - 'a' + 1;
+    }
+
     /**
      * @return which row this position is in
      *         1 codes for the bottom row

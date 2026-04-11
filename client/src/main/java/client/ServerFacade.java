@@ -1,5 +1,6 @@
 package client;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -11,19 +12,26 @@ import java.util.Map;
 import com.google.gson.Gson;
 
 import chess.ChessGame.TeamColor;
+import websocket.commands.ConnectCommand;
+import websocket.commands.LeaveCommand;
+import websocket.commands.UserGameCommand;
 
 public class ServerFacade {
-    private final String baseUrl;
-    private final HttpClient client = HttpClient.newHttpClient();
+    private final String httpBaseUrl;
+    private final String wsUrl;
+    private final HttpClient httpClient = HttpClient.newHttpClient();
+    private WebSocketClient wsClient;
     private final static String AUTH_HEADER_NAME = "authorization";
     private final Gson gson = new Gson();
 
     public ServerFacade(String hostname, int port) {
-        this.baseUrl = String.format("http://%s:%d", hostname, port);
+        this.httpBaseUrl = String.format("http://%s:%d", hostname, port);
+        this.wsUrl = String.format("ws://%s:%d/ws", hostname, port);
     }
 
-    public ServerFacade(String serverUrl) {
-        this.baseUrl = serverUrl;
+    public ServerFacade(String serverUrl, String wsUrl) {
+        this.httpBaseUrl = serverUrl;
+        this.wsUrl = wsUrl;
     }
 
     public LoginResponse login(String username, String password)
@@ -90,6 +98,41 @@ public class ServerFacade {
         parseResponse(response, null);
     }
 
+    public void connectToGame(String authToken, int gameID, ServerMessageHandler messageHandler)
+            throws ConnectionErrorException {
+        try {
+            wsClient = new WebSocketClient(wsUrl, messageHandler);
+            wsClient.sendCommand(new ConnectCommand(authToken, gameID));
+        } catch (Exception e) {
+            throw new ConnectionErrorException(e.getMessage());
+        }
+    }
+
+    public void leaveGame(String authToken, int gameID) throws ConnectionErrorException {
+        if (wsClient == null) {
+            throw new ConnectionErrorException("not connected to game");
+        }
+        try {
+            wsClient.sendCommand(new LeaveCommand(authToken, gameID));
+            wsClient.close();
+        } catch (IOException e) {
+            throw new ConnectionErrorException("Error connecting to server");
+        }
+        wsClient = null;
+    }
+
+    public void sendGameCommand(UserGameCommand command) throws ConnectionErrorException {
+        if (wsClient == null) {
+            throw new ConnectionErrorException("not connected to game");
+        }
+        try {
+            System.out.println("sending command: " + command.getCommandType());
+            wsClient.sendCommand(command);
+        } catch (IOException e) {
+            throw new ConnectionErrorException("not connected to game");
+        }
+    }
+
     public void clearDB() throws ConnectionErrorException {
         delete("/db");
     }
@@ -111,7 +154,7 @@ public class ServerFacade {
     private <T> T parseResponse(HttpResponse<String> response, Class<T> responseClass)
             throws BadRequestException, UnauthorizedException, AlreadyTakenException, ServerErrorException {
         if (response.statusCode() != 200) {
-            String message = gson.fromJson(response.body(), ServerMessage.class).message();
+            String message = gson.fromJson(response.body(), ServerResponse.class).message();
             handleErrorStatusCode(response.statusCode(), message);
         }
         if (responseClass == null) {
@@ -122,7 +165,7 @@ public class ServerFacade {
 
     private URI getUri(String path) {
         try {
-            return new URI(baseUrl + path);
+            return new URI(httpBaseUrl + path);
         } catch (Exception e) {
             return null;
         }
@@ -139,7 +182,7 @@ public class ServerFacade {
         }
         var request = requestBuilder.build();
         try {
-            return client.send(request, BodyHandlers.ofString());
+            return httpClient.send(request, BodyHandlers.ofString());
         } catch (Exception e) {
             throw new ConnectionErrorException(e.getMessage());
         }
@@ -156,7 +199,7 @@ public class ServerFacade {
         }
         var request = requestBuilder.build();
         try {
-            return client.send(request, BodyHandlers.ofString());
+            return httpClient.send(request, BodyHandlers.ofString());
         } catch (Exception e) {
             throw new ConnectionErrorException(e.getMessage());
         }
@@ -173,7 +216,7 @@ public class ServerFacade {
         }
         var request = requestBuilder.build();
         try {
-            return client.send(request, BodyHandlers.ofString());
+            return httpClient.send(request, BodyHandlers.ofString());
         } catch (Exception e) {
             throw new ConnectionErrorException(e.getMessage());
         }
@@ -190,7 +233,7 @@ public class ServerFacade {
         }
         var request = requestBuilder.build();
         try {
-            return client.send(request, BodyHandlers.ofString());
+            return httpClient.send(request, BodyHandlers.ofString());
         } catch (Exception e) {
             throw new ConnectionErrorException(e.getMessage());
         }

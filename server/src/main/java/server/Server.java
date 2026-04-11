@@ -17,6 +17,12 @@ import io.javalin.validation.ValidationException;
 import service.*;
 import service.request.*;
 import service.result.*;
+import websocket.commands.ConnectCommand;
+import websocket.commands.LeaveCommand;
+import websocket.commands.MakeMoveCommand;
+import websocket.commands.ResignCommand;
+import websocket.commands.UserGameCommand;
+import websocket.messages.ErrorMessage;
 
 public class Server {
 
@@ -24,9 +30,12 @@ public class Server {
     private final UserService userService;
     private final GameService gameService;
     private final DBService dbService;
+    private final GameplayService gameplayService;
     private final AuthDAO authDAO;
     private final UserDAO userDAO;
     private final GameDAO gameDAO;
+
+    private final WebsocketConnectionManager connectionManager;
 
     private static final String ERROR_MESSAGE_FORMAT = "Error: %s";
 
@@ -46,6 +55,11 @@ public class Server {
         userService = new UserService(userDAO, authDAO);
         gameService = new GameService(gameDAO, authDAO);
         dbService = new DBService(authDAO, userDAO, gameDAO);
+        gameplayService = new GameplayService(gameDAO, authDAO);
+
+        // WS connection manager
+        connectionManager = new WebsocketConnectionManager();
+
         // web server
         javalin = Javalin.create(config -> {
             config.staticFiles.add("web");
@@ -110,6 +124,83 @@ public class Server {
         javalin.delete("/db", ctx -> {
             dbService.clear();
             ctx.status(200);
+        });
+
+        javalin.ws("/ws", ws -> {
+
+            ws.onConnect(ctx -> {
+                ctx.enableAutomaticPings();
+            });
+
+            ws.onMessage(ctx -> {
+                UserGameCommand command = ctx.messageAsClass(UserGameCommand.class);
+                // validate
+                // catch (UnauthorizedException e) {
+                // ctx.sendAsClass(new ErrorMessage(String.format(ERROR_MESSAGE_FORMAT,
+                // "unauthorized")),
+                // ErrorMessage.class);
+                // return;
+                // } catch (DoesNotExistException e) {
+                // ctx.sendAsClass(new ErrorMessage(String.format(ERROR_MESSAGE_FORMAT, "game
+                // does not exist")),
+                // ErrorMessage.class);
+                // return;
+                // } catch (ServerErrorException e) {
+                // ctx.sendAsClass(new ErrorMessage(String.format(ERROR_MESSAGE_FORMAT,
+                // "internal server error")),
+                // ErrorMessage.class);
+                // return;
+                // }
+                CommandResult commandResult = null;
+                try {
+                    switch (command.getCommandType()) {
+                        case CONNECT:
+                            command = ctx.messageAsClass(ConnectCommand.class);
+                            commandResult = gameplayService.connect((ConnectCommand) command);
+                            connectionManager.addSession(command.getGameID(), ctx);
+                            break;
+                        case MAKE_MOVE:
+                            command = ctx.messageAsClass(MakeMoveCommand.class);
+                            try {
+                                commandResult = gameplayService.makeMove((MakeMoveCommand) command);
+                            } catch (ServerErrorException e) {
+                                ctx.sendAsClass(
+                                        new ErrorMessage(String.format(ERROR_MESSAGE_FORMAT, "internal server error")),
+                                        ErrorMessage.class);
+                                return;
+                            }
+                            break;
+                        case LEAVE:
+                            command = ctx.messageAsClass(LeaveCommand.class);
+                            commandResult = gameplayService.leaveGame((LeaveCommand) command);
+                            connectionManager.removeSession(command.getGameID(), ctx);
+                            break;
+                        case RESIGN:
+                            command = ctx.messageAsClass(ResignCommand.class);
+                            commandResult = gameplayService.resign((ResignCommand) command);
+                            break;
+                    }
+                } catch (UnauthorizedException e) {
+                    ctx.sendAsClass(new ErrorMessage(String.format(ERROR_MESSAGE_FORMAT, "unauthorized")), ErrorMessage.class);
+                } catch (DoesNotExistException e) {
+                    ctx.sendAsClass(new ErrorMessage(String.format(ERROR_MESSAGE_FORMAT, "game not found")),
+                            ErrorMessage.class);
+                } catch (ServerErrorException e) {
+                    ctx.sendAsClass(
+                            new ErrorMessage(String.format(ERROR_MESSAGE_FORMAT, "server error, please try again")),
+                            ErrorMessage.class);
+                }
+
+                if (commandResult != null) {
+                    for (var outbound : commandResult.outbound()) {
+                        switch (outbound.target()) {
+                            case SELF -> ctx.sendAsClass(outbound.message(), outbound.message().getClass());
+                            case OTHERS -> connectionManager.broadcast(commandResult.gameID(), outbound.message(), ctx);
+                            case ALL -> connectionManager.broadcastAll(commandResult.gameID(), outbound.message());
+                        }
+                    }
+                }
+            });
         });
         // exception handlers
         addExceptionHandlers(javalin);

@@ -1,8 +1,10 @@
 package ui;
 
 import java.io.PrintStream;
+import java.util.Collection;
 
 import chess.ChessBoard;
+import chess.ChessMove;
 import chess.ChessPiece;
 import chess.ChessPosition;
 import chess.ChessGame.TeamColor;
@@ -14,7 +16,7 @@ public class ChessBoardPrinter extends StreamPrinter {
         super(output);
     }
 
-    public void drawBoard(ChessBoard board, boolean isBlack) {
+    public void drawBoard(ChessBoard board, boolean isBlack, Collection<ChessMove> highlightedMoves) {
         int rowStart = isBlack ? ChessBoard.BOARD_ROWS + 1 : 0;
         int rowEnd = isBlack ? -1 : ChessBoard.BOARD_ROWS + 2;
         int rowDelta = isBlack ? -1 : 1;
@@ -41,8 +43,18 @@ public class ChessBoardPrinter extends StreamPrinter {
                 } else {
                     // chess board
                     // determine background color
-                    setBackgroundColor((row % 2 == 0 && col % 2 != 0) || (row % 2 != 0 && col % 2 == 0) ? Color.BLACK
+                    var position = new ChessPosition(ChessBoard.BOARD_ROWS - row + 1, col);
+                    if (highlightedMoves != null && !highlightedMoves.isEmpty() && highlightedMoves.stream().anyMatch(move -> move.getEndPosition().equals(position))) {
+                        if (board.getPiece(position) != null) {
+                            setBackgroundColor(Color.RED);
+                        } else {
+                            setBackgroundColor(Color.GREEN);
+                        }
+                    } else {
+                        setBackgroundColor((row % 2 == 0 && col % 2 != 0) || (row % 2 != 0 && col % 2 == 0) ? Color.BLACK
                             : Color.WHITE);
+                    }
+                    
                     // rows are reversed since the console prints top to bottom whereas the board is
                     // bottom to top
                     ChessPiece piece = board
@@ -57,6 +69,10 @@ public class ChessBoardPrinter extends StreamPrinter {
             setBackgroundColor(Color.NONE);
             out.print('\n');
         }
+    }
+
+    public void drawBoard(ChessBoard board, boolean isBlack) {
+        drawBoard(board, isBlack, null);
     }
 
     private void drawChessPiece(PieceType type, TeamColor color) {

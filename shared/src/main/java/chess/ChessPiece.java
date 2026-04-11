@@ -40,6 +40,25 @@ public class ChessPiece {
     private static final PieceType[] PAWN_PROMOTABLE_PIECE_TYPES = new PieceType[] { PieceType.QUEEN, PieceType.ROOK,
             PieceType.BISHOP, PieceType.KNIGHT };
 
+    public static PieceType pieceTypeFromChar(char pieceChar) throws IllegalArgumentException {
+        switch (Character.toLowerCase(pieceChar)) {
+            case 'k':
+                return PieceType.KING;
+            case 'q':
+                return PieceType.QUEEN;
+            case 'b':
+                return PieceType.BISHOP;
+            case 'n':
+                return PieceType.KNIGHT;
+            case 'r':
+                return PieceType.ROOK;
+            case 'p':
+                return PieceType.PAWN;
+            default:
+                throw new IllegalArgumentException("Invalid piece character: " + pieceChar);
+        }
+    }
+
     /**
      * @return Which team this chess piece belongs to
      */

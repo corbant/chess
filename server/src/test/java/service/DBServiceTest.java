@@ -40,7 +40,7 @@ public class DBServiceTest {
             AuthData auth = new AuthData(UUID.randomUUID().toString(), "username");
             authDAO.createAuth(auth);
 
-            GameData game = new GameData(1, "username", "username", "game name", new ChessGame());
+            GameData game = new GameData(1, "username", "username", "game name", new ChessGame(), null);
             gameDAO.createGame(game);
 
             dbService.clear();
