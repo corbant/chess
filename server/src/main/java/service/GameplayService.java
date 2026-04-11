@@ -159,6 +159,10 @@ public class GameplayService {
             throws UnauthorizedException, DoesNotExistException, ServerErrorException {
         AuthData authSession = validateAuthSession(command);
         GameData gameData = getGameData(command);
+        if (gameData.result() != null) {
+            return new CommandResult(gameData.gameID(),
+                    List.of(new OutboundWSServerMessage(Target.SELF, new ErrorMessage("Error: game ended"))));
+        }
 
         TeamColor teamColor = getUserTeamColor(authSession, gameData);
         if (teamColor != null) {
@@ -182,7 +186,7 @@ public class GameplayService {
         }
 
         return new CommandResult(gameData.gameID(),
-                List.of(new OutboundWSServerMessage(OutboundWSServerMessage.Target.OTHERS,
+                List.of(new OutboundWSServerMessage(OutboundWSServerMessage.Target.ALL,
                         new NotificationMessage("resign " + authSession.username()))));
     }
 

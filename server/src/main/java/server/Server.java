@@ -181,14 +181,14 @@ public class Server {
                             break;
                     }
                 } catch (UnauthorizedException e) {
-                    ctx.sendAsClass(new ErrorMessage(String.format(ERROR_MESSAGE_FORMAT, "unauthorized")), getClass());
+                    ctx.sendAsClass(new ErrorMessage(String.format(ERROR_MESSAGE_FORMAT, "unauthorized")), ErrorMessage.class);
                 } catch (DoesNotExistException e) {
                     ctx.sendAsClass(new ErrorMessage(String.format(ERROR_MESSAGE_FORMAT, "game not found")),
-                            getClass());
+                            ErrorMessage.class);
                 } catch (ServerErrorException e) {
                     ctx.sendAsClass(
                             new ErrorMessage(String.format(ERROR_MESSAGE_FORMAT, "server error, please try again")),
-                            getClass());
+                            ErrorMessage.class);
                 }
 
                 if (commandResult != null) {
