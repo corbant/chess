@@ -48,7 +48,7 @@ public class GameplayService {
         ChessMove move = command.getMove();
         if (getUserTeamColor(authSession, gameData) != game.getTeamTurn()) {
             return new CommandResult(gameData.gameID(),
-                    List.of(new OutboundWSServerMessage(Target.SELF, new ErrorMessage("Error: invalid move"))));
+                    List.of(new OutboundWSServerMessage(Target.SELF, new ErrorMessage("Error: not your turn"))));
         }
         try {
             game.makeMove(move);

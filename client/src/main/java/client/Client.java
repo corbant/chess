@@ -61,6 +61,16 @@ public class Client {
         Command highlightCommand = new Command("highlight", "all legal moves for piece",
                 List.of(new CommandArgument("piece", String.class, true)), (commandArgs) -> {
                     String pieceLocation = (String) commandArgs[0];
+                    ChessPosition position;
+                    try {
+                        position = ChessPosition.fromString(pieceLocation);
+                    } catch (IllegalArgumentException e) {
+                        printErrorMessage("Invalid position format, please use format <column><row> (e.g. a1)");
+                        return;
+                    }
+                    printer.newline();
+                    var validMoves = currentGame.validMoves(position);
+                    printer.drawBoard(currentGame.getBoard(), teamColor != null ? teamColor == TeamColor.BLACK : false, validMoves);
                 });
 
         loggedOutCommands = List.of(new Command("register", "to create an account",
@@ -358,7 +368,7 @@ public class Client {
 
     private void drawBoard(ChessBoard board) {
         printer.newline();
-        printer.drawBoard(board, false);
+        printer.drawBoard(board, teamColor != null ? teamColor == TeamColor.BLACK : false);
         printer.newline();
     }
 

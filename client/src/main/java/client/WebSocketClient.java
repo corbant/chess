@@ -11,10 +11,6 @@ import jakarta.websocket.EndpointConfig;
 import jakarta.websocket.MessageHandler;
 import jakarta.websocket.Session;
 import jakarta.websocket.WebSocketContainer;
-import websocket.commands.ConnectCommand;
-import websocket.commands.LeaveCommand;
-import websocket.commands.MakeMoveCommand;
-import websocket.commands.ResignCommand;
 import websocket.commands.UserGameCommand;
 import websocket.messages.ErrorMessage;
 import websocket.messages.LoadGameMessage;
@@ -46,12 +42,10 @@ public class WebSocketClient extends Endpoint {
                     case NOTIFICATION:
                         serverMessage = gson.fromJson(message, NotificationMessage.class);
                         break;
-
                 }
 
                 messageHandler.handleMessage(serverMessage);
             }
-
         });
     }
 

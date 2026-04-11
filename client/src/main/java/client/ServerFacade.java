@@ -12,8 +12,6 @@ import java.util.Map;
 import com.google.gson.Gson;
 
 import chess.ChessGame.TeamColor;
-import jakarta.websocket.Endpoint;
-import jakarta.websocket.Session;
 import websocket.commands.ConnectCommand;
 import websocket.commands.LeaveCommand;
 import websocket.commands.UserGameCommand;
