@@ -333,6 +333,12 @@ public class Client {
     }
 
     private void resign() {
+        printer.print("Are you sure you want to resign? (y/n)");
+        String response = ClientMain.scanner.nextLine();
+        if (!response.equalsIgnoreCase("y")) {
+            printer.println("Resignation cancelled");
+            return;
+        }
         try {
             server.sendGameCommand(new ResignCommand(authToken, currentGameID));
         } catch (ConnectionErrorException e) {
@@ -361,6 +367,7 @@ public class Client {
         } catch (ConnectionErrorException e) {
             printErrorMessage("Unable to connect to server, please try again");
         }
+        this.currentGameID = gameID;
     }
 
     private void logout() {

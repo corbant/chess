@@ -91,22 +91,22 @@ public class GameplayService {
         if (gameResult != null) {
             switch (gameResult) {
                 case DRAW:
-                    outboundMessages.add(new OutboundWSServerMessage(Target.ALL, new NotificationMessage("stalemate detected")));
+                    outboundMessages.add(new OutboundWSServerMessage(Target.ALL, new NotificationMessage("stalemate")));
                     break;
                 case BLACK:
-                    outboundMessages.add(new OutboundWSServerMessage(Target.ALL, new NotificationMessage("black wins!")));
+                    outboundMessages.add(new OutboundWSServerMessage(Target.ALL, new NotificationMessage(gameData.blackUsername() + " checkmate")));
                     break;
                 case WHITE:
-                    outboundMessages.add(new OutboundWSServerMessage(Target.ALL, new NotificationMessage("white wins!")));
+                    outboundMessages.add(new OutboundWSServerMessage(Target.ALL, new NotificationMessage(gameData.whiteUsername() + " checkmate")));
                     break;
             }
         } else if (inCheck != null) {
             switch (inCheck) {
                 case WHITE:
-                    outboundMessages.add(new OutboundWSServerMessage(Target.ALL, new NotificationMessage("white is in check")));
+                    outboundMessages.add(new OutboundWSServerMessage(Target.ALL, new NotificationMessage(gameData.whiteUsername() + " check")));
                     break;
                 case BLACK:
-                    outboundMessages.add(new OutboundWSServerMessage(Target.ALL, new NotificationMessage("black is in check")));
+                    outboundMessages.add(new OutboundWSServerMessage(Target.ALL, new NotificationMessage(gameData.blackUsername() + " check")));
                     break;
             }
         }
